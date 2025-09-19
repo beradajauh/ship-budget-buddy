@@ -123,7 +123,6 @@ export default function AccountForm({ mode, account, onSave, onClose }: AccountF
                   <SelectValue placeholder="Select parent category (for sub-categories)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Parent (Main Category)</SelectItem>
                   {mockParentCategories
                     .filter(cat => cat.id !== account?.id) // Don't allow self as parent
                     .map((category) => (
