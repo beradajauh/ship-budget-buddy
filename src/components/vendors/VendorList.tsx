@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Vendor, FormMode } from '@/types';
 import VendorForm from './VendorForm';
 
@@ -110,66 +111,74 @@ export default function VendorList() {
         </div>
       </div>
 
-      {/* Vendors grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredVendors.map((vendor) => (
-          <Card key={vendor.id} className="border-border hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-foreground">{vendor.vendorCode}</CardTitle>
-                <Badge 
-                  variant={vendor.status === 'Active' ? 'default' : 'secondary'}
-                  className={vendor.status === 'Active' ? 'bg-success text-success-foreground' : ''}
-                >
-                  {vendor.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <h3 className="font-semibold text-foreground">{vendor.vendorName}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{vendor.address}</p>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Contact:</span>
-                <span className="text-foreground font-medium">{vendor.contactPerson}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tax ID:</span>
-                <span className="text-foreground font-medium">{vendor.taxId}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Bank:</span>
-                <span className="text-foreground font-medium">{vendor.bankAccountInfo}</span>
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-3">
-                <Button variant="ghost" size="sm" onClick={() => handleView(vendor)}>
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleEdit(vendor)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Vendors table */}
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground">Vendor List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Vendor Code</TableHead>
+                <TableHead>Vendor Name</TableHead>
+                <TableHead>Contact Person</TableHead>
+                <TableHead>Bank Info</TableHead>
+                <TableHead>Tax ID</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredVendors.map((vendor) => (
+                <TableRow key={vendor.id}>
+                  <TableCell className="font-medium">{vendor.vendorCode}</TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{vendor.vendorName}</div>
+                      <div className="text-sm text-muted-foreground">{vendor.address}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{vendor.contactPerson}</TableCell>
+                  <TableCell>{vendor.bankAccountInfo}</TableCell>
+                  <TableCell>{vendor.taxId}</TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={vendor.status === 'Active' ? 'default' : 'secondary'}
+                      className={vendor.status === 'Active' ? 'bg-success text-success-foreground' : ''}
+                    >
+                      {vendor.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="ghost" size="sm" onClick={() => handleView(vendor)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(vendor)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
-      {filteredVendors.length === 0 && (
-        <Card className="border-border">
-          <CardContent className="text-center py-10">
-            <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No vendors found</h3>
-            <p className="text-muted-foreground">
-              {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding your first vendor.'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+          {filteredVendors.length === 0 && (
+            <div className="text-center py-10">
+              <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No vendors found</h3>
+              <p className="text-muted-foreground">
+                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding your first vendor.'}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

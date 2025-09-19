@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BudgetHeader, BudgetDetail, FormMode } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { ExpenseHeader, ExpenseDetail, FormMode } from '@/types';
 
-interface BudgetFormProps {
+interface ExpenseFormProps {
   mode: FormMode;
-  budget?: BudgetHeader | null;
-  onSave: (budget: Partial<BudgetHeader>) => void;
+  expense?: ExpenseHeader | null;
+  onSave: (expense: Partial<ExpenseHeader>) => void;
   onClose: () => void;
 }
 
@@ -26,7 +28,12 @@ const mockVessels = [
   { id: '2', name: 'TB Nusantara', code: 'TB002', companyId: '2' },
 ];
 
-const mockCategories = [
+const mockVendors = [
+  { id: '1', name: 'PT Marina Services', code: 'VD001' },
+  { id: '2', name: 'PT Ocean Management', code: 'VD002' },
+];
+
+const mockCOAs = [
   { id: '11', name: 'Marine Diesel Oil', code: 'FUEL-MDO' },
   { id: '12', name: 'Lubricating Oil', code: 'FUEL-LUB' },
   { id: '21', name: 'Crew Salaries', code: 'CREW-SAL' },
@@ -35,21 +42,29 @@ const mockCategories = [
   { id: '4', name: 'Insurance', code: 'INS' },
 ];
 
-export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetFormProps) {
+// Mock budget data to check budget flags
+const mockBudgets = [
+  { vesselId: '1', period: '2024-03', coaId: '11', budgetAmount: 50000 },
+  { vesselId: '1', period: '2024-03', coaId: '21', budgetAmount: 25000 },
+  { vesselId: '2', period: '2024-03', coaId: '11', budgetAmount: 30000 },
+];
+
+export default function ExpenseForm({ mode, expense, onSave, onClose }: ExpenseFormProps) {
   const [formData, setFormData] = useState({
-    companyId: budget?.companyId || '',
-    vesselId: budget?.vesselId || '',
-    period: budget?.period || '',
-    currency: budget?.currency || 'USD',
-    status: budget?.status || 'Draft',
+    companyId: expense?.companyId || '',
+    vesselId: expense?.vesselId || '',
+    vendorId: expense?.vendorId || '',
+    period: expense?.period || '',
+    currency: expense?.currency || 'USD',
+    status: expense?.status || 'Draft',
   });
 
-  const [budgetDetails, setBudgetDetails] = useState<BudgetDetail[]>(
-    budget?.budgetDetails || []
+  const [expenseDetails, setExpenseDetails] = useState<ExpenseDetail[]>(
+    expense?.expenseDetails || []
   );
 
   const isReadonly = mode === 'view';
-  const title = mode === 'create' ? 'Create New Budget' : mode === 'edit' ? 'Edit Budget' : 'Budget Details';
+  const title = mode === 'create' ? 'Submit New Expenses' : mode === 'edit' ? 'Edit Expense Submission' : 'Expense Details';
 
   const selectedCompany = mockCompanies.find(c => c.id === formData.companyId);
   const availableVessels = mockVessels.filter(v => v.companyId === formData.companyId);
@@ -57,8 +72,8 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (mode !== 'view') {
-      const totalBudget = budgetDetails.reduce((sum, detail) => sum + detail.budgetAmount, 0);
-      onSave({ ...formData, totalBudget, budgetDetails });
+      const totalExpense = expenseDetails.reduce((sum, detail) => sum + detail.amount, 0);
+      onSave({ ...formData, totalExpense, expenseDetails });
     }
   };
 
@@ -80,28 +95,49 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
     });
   };
 
-  const addBudgetDetail = () => {
-    const newDetail: BudgetDetail = {
+  const getBudgetFlag = (coaId: string, amount: number): 'Within Budget' | 'Out of Budget' => {
+    const budget = mockBudgets.find(b => 
+      b.vesselId === formData.vesselId && 
+      b.period === formData.period && 
+      b.coaId === coaId
+    );
+    
+    if (!budget) return 'Out of Budget';
+    return amount <= budget.budgetAmount ? 'Within Budget' : 'Out of Budget';
+  };
+
+  const addExpenseDetail = () => {
+    const newDetail: ExpenseDetail = {
       id: Date.now().toString(),
-      budgetId: budget?.id || '',
+      expenseId: expense?.id || '',
       coaId: '',
-      budgetAmount: 0,
-      notes: '',
+      description: '',
+      expenseDate: new Date().toISOString().split('T')[0],
+      amount: 0,
+      budgetFlag: 'Within Budget',
     };
-    setBudgetDetails([...budgetDetails, newDetail]);
+    setExpenseDetails([...expenseDetails, newDetail]);
   };
 
-  const updateBudgetDetail = (index: number, field: keyof BudgetDetail, value: string | number) => {
-    const updated = [...budgetDetails];
+  const updateExpenseDetail = (index: number, field: keyof ExpenseDetail, value: string | number) => {
+    const updated = [...expenseDetails];
     updated[index] = { ...updated[index], [field]: value };
-    setBudgetDetails(updated);
+    
+    // Auto-update budget flag when COA or amount changes
+    if (field === 'coaId' || field === 'amount') {
+      const detail = updated[index];
+      updated[index].budgetFlag = getBudgetFlag(detail.coaId, detail.amount);
+    }
+    
+    setExpenseDetails(updated);
   };
 
-  const removeBudgetDetail = (index: number) => {
-    setBudgetDetails(budgetDetails.filter((_, i) => i !== index));
+  const removeExpenseDetail = (index: number) => {
+    setExpenseDetails(expenseDetails.filter((_, i) => i !== index));
   };
 
-  const totalBudget = budgetDetails.reduce((sum, detail) => sum + detail.budgetAmount, 0);
+  const totalExpense = expenseDetails.reduce((sum, detail) => sum + detail.amount, 0);
+  const outOfBudgetCount = expenseDetails.filter(d => d.budgetFlag === 'Out of Budget').length;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -121,18 +157,18 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
         <div>
           <h2 className="text-2xl font-bold text-foreground">{title}</h2>
           <p className="text-muted-foreground">
-            {mode === 'create' ? 'Set up a new monthly budget for a vessel' : 
-             mode === 'edit' ? 'Update budget information and allocations' : 
-             'View budget details and allocations'}
+            {mode === 'create' ? 'Submit vessel expense details with supporting documents' : 
+             mode === 'edit' ? 'Update expense submission details' : 
+             'View expense submission and supporting documents'}
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Budget Header */}
+        {/* Expense Header */}
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Budget Information</CardTitle>
+            <CardTitle className="text-foreground">Expense Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -179,7 +215,28 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="vendorId">Vendor *</Label>
+                <Select 
+                  value={formData.vendorId} 
+                  onValueChange={(value) => handleChange('vendorId', value)}
+                  disabled={isReadonly}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select vendor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockVendors.map((vendor) => (
+                      <SelectItem key={vendor.id} value={vendor.id}>
+                        {vendor.code} - {vendor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="period">Period (YYYY-MM) *</Label>
                 <Input
@@ -201,7 +258,7 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
                   className="bg-muted"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Auto-set based on selected company
+                  Auto-set based on company
                 </p>
               </div>
 
@@ -218,9 +275,9 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
                   <SelectContent>
                     <SelectItem value="Draft">Draft</SelectItem>
                     <SelectItem value="Submitted">Submitted</SelectItem>
+                    <SelectItem value="Reviewed">Reviewed</SelectItem>
                     <SelectItem value="Approved">Approved</SelectItem>
                     <SelectItem value="Rejected">Rejected</SelectItem>
-                    <SelectItem value="Closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -228,15 +285,22 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
           </CardContent>
         </Card>
 
-        {/* Budget Details */}
+        {/* Expense Details */}
         <Card className="border-border">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-foreground">Budget Allocation</CardTitle>
+              <div>
+                <CardTitle className="text-foreground">Expense Details</CardTitle>
+                {outOfBudgetCount > 0 && (
+                  <p className="text-sm text-destructive mt-1">
+                    ⚠️ {outOfBudgetCount} item(s) are over budget and will generate debit note
+                  </p>
+                )}
+              </div>
               {!isReadonly && (
-                <Button type="button" onClick={addBudgetDetail} size="sm" className="bg-primary hover:bg-primary-dark">
+                <Button type="button" onClick={addExpenseDetail} size="sm" className="bg-primary hover:bg-primary-dark">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Item
+                  Add Expense
                 </Button>
               )}
             </div>
@@ -246,48 +310,83 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
               <TableHeader>
                 <TableRow>
                   <TableHead>COA</TableHead>
-                  <TableHead>Budget Amount</TableHead>
-                  <TableHead>Notes</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Budget Flag</TableHead>
+                  <TableHead>Supporting Doc</TableHead>
                   {!isReadonly && <TableHead className="w-16">Action</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {budgetDetails.map((detail, index) => (
+                {expenseDetails.map((detail, index) => (
                   <TableRow key={detail.id}>
                     <TableCell>
                       <Select
                         value={detail.coaId}
-                        onValueChange={(value) => updateBudgetDetail(index, 'coaId', value)}
+                        onValueChange={(value) => updateExpenseDetail(index, 'coaId', value)}
                         disabled={isReadonly}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select COA" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockCategories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.code} - {category.name}
+                          {mockCOAs.map((coa) => (
+                            <SelectItem key={coa.id} value={coa.id}>
+                              {coa.code} - {coa.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
                     <TableCell>
+                      <Textarea
+                        value={detail.description}
+                        onChange={(e) => updateExpenseDetail(index, 'description', e.target.value)}
+                        placeholder="e.g., Gaji ABK September 2024"
+                        readOnly={isReadonly}
+                        rows={2}
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Input
-                        type="number"
-                        value={detail.budgetAmount}
-                        onChange={(e) => updateBudgetDetail(index, 'budgetAmount', parseFloat(e.target.value) || 0)}
-                        placeholder="0"
+                        type="date"
+                        value={detail.expenseDate}
+                        onChange={(e) => updateExpenseDetail(index, 'expenseDate', e.target.value)}
                         readOnly={isReadonly}
                       />
                     </TableCell>
                     <TableCell>
                       <Input
-                        value={detail.notes || ''}
-                        onChange={(e) => updateBudgetDetail(index, 'notes', e.target.value)}
-                        placeholder="Optional notes"
+                        type="number"
+                        value={detail.amount}
+                        onChange={(e) => updateExpenseDetail(index, 'amount', parseFloat(e.target.value) || 0)}
+                        placeholder="0"
                         readOnly={isReadonly}
                       />
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={detail.budgetFlag === 'Within Budget' ? 'default' : 'destructive'}
+                        className={detail.budgetFlag === 'Within Budget' ? 'bg-success text-success-foreground' : ''}
+                      >
+                        {detail.budgetFlag}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {detail.supportingDoc ? (
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-primary">Document attached</span>
+                        </div>
+                      ) : !isReadonly ? (
+                        <Button variant="outline" size="sm">
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload
+                        </Button>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No document</span>
+                      )}
                     </TableCell>
                     {!isReadonly && (
                       <TableCell>
@@ -295,7 +394,7 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeBudgetDetail(index)}
+                          onClick={() => removeExpenseDetail(index)}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -304,22 +403,22 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
                     )}
                   </TableRow>
                 ))}
-                {budgetDetails.length === 0 && (
+                {expenseDetails.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={isReadonly ? 3 : 4} className="text-center text-muted-foreground py-8">
-                      No budget items added yet. Click "Add Item" to start.
+                    <TableCell colSpan={isReadonly ? 6 : 7} className="text-center text-muted-foreground py-8">
+                      No expense items added yet. Click "Add Expense" to start.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
 
-            {budgetDetails.length > 0 && (
+            {expenseDetails.length > 0 && (
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-foreground">Total Budget:</span>
+                  <span className="text-lg font-semibold text-foreground">Total Expense:</span>
                   <span className="text-xl font-bold text-primary">
-                    {formatCurrency(totalBudget)}
+                    {formatCurrency(totalExpense)}
                   </span>
                 </div>
               </div>
@@ -334,7 +433,7 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
             </Button>
             <Button type="submit" className="bg-primary hover:bg-primary-dark">
               <Save className="h-4 w-4 mr-2" />
-              {mode === 'create' ? 'Create Budget' : 'Update Budget'}
+              {mode === 'create' ? 'Submit Expenses' : 'Update Submission'}
             </Button>
           </div>
         )}

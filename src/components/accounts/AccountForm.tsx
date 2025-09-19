@@ -24,14 +24,14 @@ const mockParentCategories = [
 
 export default function AccountForm({ mode, account, onSave, onClose }: AccountFormProps) {
   const [formData, setFormData] = useState({
-    categoryCode: account?.categoryCode || '',
-    categoryName: account?.categoryName || '',
-    parentCategoryId: account?.parentCategoryId || '',
+    coaCode: account?.coaCode || '',
+    coaName: account?.coaName || '',
+    parentCOAId: account?.parentCOAId || '',
     status: account?.status || 'Active',
   });
 
   const isReadonly = mode === 'view';
-  const title = mode === 'create' ? 'Add New Category' : mode === 'edit' ? 'Edit Category' : 'Category Details';
+  const title = mode === 'create' ? 'Add New COA' : mode === 'edit' ? 'Edit COA' : 'COA Details';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,26 +53,26 @@ export default function AccountForm({ mode, account, onSave, onClose }: AccountF
         <div>
           <h2 className="text-2xl font-bold text-foreground">{title}</h2>
           <p className="text-muted-foreground">
-            {mode === 'create' ? 'Create a new expense category' : 
-             mode === 'edit' ? 'Update category information' : 
-             'View category details'}
+            {mode === 'create' ? 'Create a new expense account' : 
+             mode === 'edit' ? 'Update COA information' : 
+             'View COA details'}
           </p>
         </div>
       </div>
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Category Information</CardTitle>
+          <CardTitle className="text-foreground">COA Information</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="categoryCode">Category Code *</Label>
+                <Label htmlFor="coaCode">COA Code *</Label>
                 <Input
-                  id="categoryCode"
-                  value={formData.categoryCode}
-                  onChange={(e) => handleChange('categoryCode', e.target.value)}
+                  id="coaCode"
+                  value={formData.coaCode}
+                  onChange={(e) => handleChange('coaCode', e.target.value)}
                   placeholder="e.g., FUEL, CREW, MAINT"
                   required
                   readOnly={isReadonly}
@@ -101,11 +101,11 @@ export default function AccountForm({ mode, account, onSave, onClose }: AccountF
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="categoryName">Category Name *</Label>
+              <Label htmlFor="coaName">COA Name *</Label>
               <Input
-                id="categoryName"
-                value={formData.categoryName}
-                onChange={(e) => handleChange('categoryName', e.target.value)}
+                id="coaName"
+                value={formData.coaName}
+                onChange={(e) => handleChange('coaName', e.target.value)}
                 placeholder="e.g., Fuel & Lubricants, Crew Expenses"
                 required
                 readOnly={isReadonly}
@@ -113,14 +113,14 @@ export default function AccountForm({ mode, account, onSave, onClose }: AccountF
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="parentCategoryId">Parent Category (Optional)</Label>
+              <Label htmlFor="parentCOAId">Parent COA (Optional)</Label>
               <Select 
-                value={formData.parentCategoryId} 
-                onValueChange={(value) => handleChange('parentCategoryId', value)}
+                value={formData.parentCOAId} 
+                onValueChange={(value) => handleChange('parentCOAId', value)}
                 disabled={isReadonly}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select parent category (for sub-categories)" />
+                  <SelectValue placeholder="Select parent COA (for sub-categories)" />
                 </SelectTrigger>
                 <SelectContent>
                   {mockParentCategories
@@ -144,7 +144,7 @@ export default function AccountForm({ mode, account, onSave, onClose }: AccountF
                 </Button>
                 <Button type="submit" className="bg-primary hover:bg-primary-dark">
                   <Save className="h-4 w-4 mr-2" />
-                  {mode === 'create' ? 'Create Category' : 'Update Category'}
+                  {mode === 'create' ? 'Create COA' : 'Update COA'}
                 </Button>
               </div>
             )}

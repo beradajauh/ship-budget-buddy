@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, Ship } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Vessel, FormMode } from '@/types';
 import VesselForm from './VesselForm';
 
@@ -115,65 +116,81 @@ export default function VesselList() {
         </div>
       </div>
 
-      {/* Vessels grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredVessels.map((vessel) => (
-          <Card key={vessel.id} className="border-border hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-foreground">{vessel.vesselCode}</CardTitle>
-                <Badge 
-                  variant={vessel.status === 'Active' ? 'default' : 'secondary'}
-                  className={vessel.status === 'Active' ? 'bg-success text-success-foreground' : ''}
-                >
-                  {vessel.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <h3 className="font-semibold text-foreground">{vessel.vesselName}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{vessel.vesselType} • Built {vessel.buildYear}</p>
-                {vessel.imoNumber && (
-                  <p className="text-xs text-muted-foreground">IMO: {vessel.imoNumber}</p>
-                )}
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Owner:</span>
-                <span className="text-foreground font-medium text-right flex-1 ml-2">{vessel.company?.companyName}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Managed by:</span>
-                <span className="text-foreground font-medium text-right flex-1 ml-2">{vessel.vendor?.vendorName}</span>
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-3">
-                <Button variant="ghost" size="sm" onClick={() => handleView(vessel)}>
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleEdit(vessel)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Vessels table */}
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground">Vessel List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Vessel Code</TableHead>
+                <TableHead>Vessel Name</TableHead>
+                <TableHead>Type & Year</TableHead>
+                <TableHead>Owner</TableHead>
+                <TableHead>Managed By</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredVessels.map((vessel) => (
+                <TableRow key={vessel.id}>
+                  <TableCell className="font-medium">{vessel.vesselCode}</TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{vessel.vesselName}</div>
+                      {vessel.imoNumber && (
+                        <div className="text-xs text-muted-foreground">IMO: {vessel.imoNumber}</div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <div>{vessel.vesselType}</div>
+                      <div className="text-muted-foreground">Built {vessel.buildYear}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{vessel.company?.companyName}</TableCell>
+                  <TableCell>{vessel.vendor?.vendorName}</TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={vessel.status === 'Active' ? 'default' : 'secondary'}
+                      className={vessel.status === 'Active' ? 'bg-success text-success-foreground' : ''}
+                    >
+                      {vessel.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="ghost" size="sm" onClick={() => handleView(vessel)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(vessel)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
-      {filteredVessels.length === 0 && (
-        <Card className="border-border">
-          <CardContent className="text-center py-10">
-            <Ship className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No vessels found</h3>
-            <p className="text-muted-foreground">
-              {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding your first vessel.'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+          {filteredVessels.length === 0 && (
+            <div className="text-center py-10">
+              <Ship className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No vessels found</h3>
+              <p className="text-muted-foreground">
+                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding your first vessel.'}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -41,9 +41,9 @@ export interface Vendor {
 
 export interface ChartOfAccount {
   id: string;
-  categoryCode: string;
-  categoryName: string;
-  parentCategoryId?: string;
+  coaCode: string;
+  coaName: string;
+  parentCOAId?: string;
   status: 'Active' | 'Inactive';
   children?: ChartOfAccount[];
   parent?: ChartOfAccount;
@@ -71,10 +71,39 @@ export interface BudgetHeader {
 export interface BudgetDetail {
   id: string;
   budgetId: string;
-  categoryId: string;
+  coaId: string;
   budgetAmount: number;
   notes?: string;
-  category?: ChartOfAccount;
+  coa?: ChartOfAccount;
+}
+
+export interface ExpenseHeader {
+  id: string;
+  companyId: string;
+  vesselId: string;
+  vendorId: string;
+  period: string; // YYYY-MM format
+  currency: string;
+  totalExpense: number;
+  status: 'Draft' | 'Submitted' | 'Reviewed' | 'Approved' | 'Rejected';
+  createdBy: string;
+  createdDate: string;
+  company?: Company;
+  vessel?: Vessel;
+  vendor?: Vendor;
+  expenseDetails?: ExpenseDetail[];
+}
+
+export interface ExpenseDetail {
+  id: string;
+  expenseId: string;
+  coaId: string;
+  description: string;
+  expenseDate: string;
+  amount: number;
+  supportingDoc?: string; // URL/link to supporting document
+  budgetFlag: 'Within Budget' | 'Out of Budget';
+  coa?: ChartOfAccount;
 }
 
 export type FormMode = 'create' | 'edit' | 'view';

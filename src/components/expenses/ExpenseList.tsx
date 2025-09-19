@@ -1,55 +1,59 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, DollarSign, Calendar } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BudgetHeader, FormMode } from '@/types';
-import BudgetForm from './BudgetForm';
+import { ExpenseHeader, FormMode } from '@/types';
+import ExpenseForm from './ExpenseForm';
 
 // Mock data
-const mockBudgets: BudgetHeader[] = [
+const mockExpenses: ExpenseHeader[] = [
   {
     id: '1',
     companyId: '1',
     vesselId: '1',
+    vendorId: '1',
     period: '2024-03',
     currency: 'USD',
-    totalBudget: 125000,
+    totalExpense: 118500,
     status: 'Approved',
-    createdBy: 'admin',
-    createdDate: '2024-02-25',
-    approvedBy: 'manager',
-    approvedDate: '2024-02-28',
+    createdBy: 'vendor_admin',
+    createdDate: '2024-03-25',
     company: { id: '1', companyName: 'PT Pelayaran Nusantara' } as any,
     vessel: { id: '1', vesselName: 'MV Sinar Harapan', vesselCode: 'MV001' } as any,
+    vendor: { id: '1', vendorName: 'PT Marina Services' } as any,
   },
   {
     id: '2',
     companyId: '2',
     vesselId: '2',
+    vendorId: '2',
     period: '2024-03',
     currency: 'USD',
-    totalBudget: 85000,
+    totalExpense: 89750,
     status: 'Submitted',
-    createdBy: 'admin',
-    createdDate: '2024-02-20',
+    createdBy: 'vendor_admin',
+    createdDate: '2024-03-20',
     company: { id: '2', companyName: 'PT Samudera Jaya' } as any,
     vessel: { id: '2', vesselName: 'TB Nusantara', vesselCode: 'TB002' } as any,
+    vendor: { id: '2', vendorName: 'PT Ocean Management' } as any,
   },
   {
     id: '3',
     companyId: '1',
     vesselId: '1',
+    vendorId: '1',
     period: '2024-04',
     currency: 'USD',
-    totalBudget: 0,
+    totalExpense: 0,
     status: 'Draft',
-    createdBy: 'admin',
-    createdDate: '2024-03-15',
+    createdBy: 'vendor_admin',
+    createdDate: '2024-04-15',
     company: { id: '1', companyName: 'PT Pelayaran Nusantara' } as any,
     vessel: { id: '1', vesselName: 'MV Sinar Harapan', vesselCode: 'MV001' } as any,
+    vendor: { id: '1', vendorName: 'PT Marina Services' } as any,
   },
 ];
 
@@ -57,14 +61,14 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case 'Approved':
       return 'bg-success text-success-foreground';
-    case 'Submitted':
+    case 'Reviewed':
       return 'bg-accent text-accent-foreground';
+    case 'Submitted':
+      return 'bg-warning text-warning-foreground';
     case 'Draft':
       return 'bg-muted text-muted-foreground';
     case 'Rejected':
       return 'bg-destructive text-destructive-foreground';
-    case 'Closed':
-      return 'bg-secondary text-secondary-foreground';
     default:
       return 'bg-muted text-muted-foreground';
   }
@@ -85,47 +89,48 @@ const formatCurrency = (amount: number, currency: string) => {
   }).format(amount);
 };
 
-export default function BudgetList() {
-  const [budgets] = useState<BudgetHeader[]>(mockBudgets);
+export default function ExpenseList() {
+  const [expenses] = useState<ExpenseHeader[]>(mockExpenses);
   const [searchTerm, setSearchTerm] = useState('');
   const [formMode, setFormMode] = useState<FormMode>('create');
-  const [selectedBudget, setSelectedBudget] = useState<BudgetHeader | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseHeader | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const filteredBudgets = budgets.filter(budget =>
-    budget.vessel?.vesselName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    budget.company?.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    budget.period.includes(searchTerm)
+  const filteredExpenses = expenses.filter(expense =>
+    expense.vessel?.vesselName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    expense.company?.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    expense.vendor?.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    expense.period.includes(searchTerm)
   );
 
   const handleCreate = () => {
     setFormMode('create');
-    setSelectedBudget(null);
+    setSelectedExpense(null);
     setShowForm(true);
   };
 
-  const handleEdit = (budget: BudgetHeader) => {
+  const handleEdit = (expense: ExpenseHeader) => {
     setFormMode('edit');
-    setSelectedBudget(budget);
+    setSelectedExpense(expense);
     setShowForm(true);
   };
 
-  const handleView = (budget: BudgetHeader) => {
+  const handleView = (expense: ExpenseHeader) => {
     setFormMode('view');
-    setSelectedBudget(budget);
+    setSelectedExpense(expense);
     setShowForm(true);
   };
 
   const handleFormClose = () => {
     setShowForm(false);
-    setSelectedBudget(null);
+    setSelectedExpense(null);
   };
 
   if (showForm) {
     return (
-      <BudgetForm
+      <ExpenseForm
         mode={formMode}
-        budget={selectedBudget}
+        expense={selectedExpense}
         onClose={handleFormClose}
         onSave={() => {
           // Handle save logic here
@@ -139,12 +144,12 @@ export default function BudgetList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Budget Management</h2>
-          <p className="text-muted-foreground">Manage monthly vessel budgets</p>
+          <h2 className="text-2xl font-bold text-foreground">Expense Submission</h2>
+          <p className="text-muted-foreground">Manage vessel expense submissions from vendors</p>
         </div>
         <Button onClick={handleCreate} className="bg-primary hover:bg-primary-dark">
           <Plus className="h-4 w-4 mr-2" />
-          Create Budget
+          Submit Expenses
         </Button>
       </div>
 
@@ -153,7 +158,7 @@ export default function BudgetList() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search budgets..."
+            placeholder="Search expenses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -161,10 +166,10 @@ export default function BudgetList() {
         </div>
       </div>
 
-      {/* Budgets table */}
+      {/* Expenses table */}
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Budget List</CardTitle>
+          <CardTitle className="text-foreground">Expense Submissions</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -173,53 +178,50 @@ export default function BudgetList() {
                 <TableHead>Period</TableHead>
                 <TableHead>Vessel</TableHead>
                 <TableHead>Company</TableHead>
-                <TableHead>Total Budget</TableHead>
+                <TableHead>Vendor</TableHead>
+                <TableHead>Total Expense</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBudgets.map((budget) => (
-                <TableRow key={budget.id}>
+              {filteredExpenses.map((expense) => (
+                <TableRow key={expense.id}>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{formatPeriod(budget.period)}</span>
+                      <Receipt className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{formatPeriod(expense.period)}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{budget.vessel?.vesselName}</div>
-                      <div className="text-sm text-muted-foreground">{budget.vessel?.vesselCode}</div>
+                      <div className="font-medium">{expense.vessel?.vesselName}</div>
+                      <div className="text-sm text-muted-foreground">{expense.vessel?.vesselCode}</div>
                     </div>
                   </TableCell>
-                  <TableCell>{budget.company?.companyName}</TableCell>
+                  <TableCell>{expense.company?.companyName}</TableCell>
+                  <TableCell>{expense.vendor?.vendorName}</TableCell>
                   <TableCell className="font-bold">
-                    {formatCurrency(budget.totalBudget, budget.currency)}
+                    {formatCurrency(expense.totalExpense, expense.currency)}
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(budget.status)}>
-                      {budget.status}
+                    <Badge className={getStatusColor(expense.status)}>
+                      {expense.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <div>{new Date(budget.createdDate).toLocaleDateString()}</div>
-                      {budget.approvedDate && (
-                        <div className="text-muted-foreground">
-                          Approved: {new Date(budget.approvedDate).toLocaleDateString()}
-                        </div>
-                      )}
+                      {new Date(expense.createdDate).toLocaleDateString()}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleView(budget)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleView(expense)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      {budget.status === 'Draft' && (
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(budget)}>
+                      {expense.status === 'Draft' && (
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(expense)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
@@ -233,12 +235,12 @@ export default function BudgetList() {
             </TableBody>
           </Table>
 
-          {filteredBudgets.length === 0 && (
+          {filteredExpenses.length === 0 && (
             <div className="text-center py-10">
-              <DollarSign className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No budgets found</h3>
+              <Receipt className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No expenses found</h3>
               <p className="text-muted-foreground">
-                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating your first budget.'}
+                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by submitting your first expense.'}
               </p>
             </div>
           )}
