@@ -10,6 +10,7 @@ import VesselList from "./components/vessels/VesselList";
 import VendorList from "./components/vendors/VendorList";
 import AccountList from "./components/accounts/AccountList";
 import BudgetList from "./components/budgets/BudgetList";
+import ExpenseList from "./components/expenses/ExpenseList";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="vendors" element={<VendorList />} />
             <Route path="accounts" element={<AccountList />} />
             <Route path="budgets" element={<BudgetList />} />
+            <Route path="expenses" element={<ExpenseList />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

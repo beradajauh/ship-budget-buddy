@@ -30,9 +30,12 @@ const navigation = [
     ],
   },
   {
-    name: 'Budgeting',
-    href: '/budgets',
+    name: 'Transactions',
     icon: DollarSign,
+    children: [
+      { name: 'Monthly Budget', href: '/budgets', icon: DollarSign },
+      { name: 'Expense Submission', href: '/expenses', icon: FileText },
+    ],
   },
 ];
 

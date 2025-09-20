@@ -26,6 +26,8 @@ export default function AccountForm({ mode, account, onSave, onClose }: AccountF
   const [formData, setFormData] = useState({
     coaCode: account?.coaCode || '',
     coaName: account?.coaName || '',
+    companyId: account?.companyId || '',
+    vendorCoaCode: account?.vendorCoaCode || '',
     parentCOAId: account?.parentCOAId || '',
     status: account?.status || 'Active',
   });
@@ -110,6 +112,39 @@ export default function AccountForm({ mode, account, onSave, onClose }: AccountF
                 required
                 readOnly={isReadonly}
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="companyId">Company *</Label>
+                <Select 
+                  value={formData.companyId} 
+                  onValueChange={(value) => handleChange('companyId', value)}
+                  disabled={isReadonly}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">PT Pelayaran Nusantara</SelectItem>
+                    <SelectItem value="2">PT Samudera Jaya</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vendorCoaCode">Vendor COA Code</Label>
+                <Input
+                  id="vendorCoaCode"
+                  value={formData.vendorCoaCode}
+                  onChange={(e) => handleChange('vendorCoaCode', e.target.value)}
+                  placeholder="e.g., VND-FUEL-001"
+                  readOnly={isReadonly}
+                />
+                <p className="text-xs text-muted-foreground">
+                  COA code used by vendor for mapping
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">

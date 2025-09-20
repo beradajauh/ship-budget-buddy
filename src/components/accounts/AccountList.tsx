@@ -12,26 +12,32 @@ import { cn } from '@/lib/utils';
 const mockAccounts: ChartOfAccount[] = [
   {
     id: '1',
-    categoryCode: 'FUEL',
-    categoryName: 'Fuel & Lubricants',
+    coaCode: 'FUEL',
+    coaName: 'Fuel & Lubricants',
+    companyId: '1',
+    vendorCoaCode: 'VND-FUEL',
     status: 'Active',
     createdAt: '2024-01-15',
     updatedAt: '2024-01-15',
     children: [
       {
         id: '11',
-        categoryCode: 'FUEL-MDO',
-        categoryName: 'Marine Diesel Oil',
-        parentCategoryId: '1',
+        coaCode: 'FUEL-MDO',
+        coaName: 'Marine Diesel Oil',
+        companyId: '1',
+        vendorCoaCode: 'VND-MDO',
+        parentCOAId: '1',
         status: 'Active',
         createdAt: '2024-01-15',
         updatedAt: '2024-01-15',
       },
       {
         id: '12',
-        categoryCode: 'FUEL-LUB',
-        categoryName: 'Lubricating Oil',
-        parentCategoryId: '1',
+        coaCode: 'FUEL-LUB',
+        coaName: 'Lubricating Oil',
+        companyId: '1',
+        vendorCoaCode: 'VND-LUB',
+        parentCOAId: '1',
         status: 'Active',
         createdAt: '2024-01-15',
         updatedAt: '2024-01-15',
@@ -40,26 +46,32 @@ const mockAccounts: ChartOfAccount[] = [
   },
   {
     id: '2',
-    categoryCode: 'CREW',
-    categoryName: 'Crew Expenses',
+    coaCode: 'CREW',
+    coaName: 'Crew Expenses',
+    companyId: '1',
+    vendorCoaCode: 'VND-CREW',
     status: 'Active',
     createdAt: '2024-01-10',
     updatedAt: '2024-01-10',
     children: [
       {
         id: '21',
-        categoryCode: 'CREW-SAL',
-        categoryName: 'Crew Salaries',
-        parentCategoryId: '2',
+        coaCode: 'CREW-SAL',
+        coaName: 'Crew Salaries',
+        companyId: '1',
+        vendorCoaCode: 'VND-SAL',
+        parentCOAId: '2',
         status: 'Active',
         createdAt: '2024-01-10',
         updatedAt: '2024-01-10',
       },
       {
         id: '22',
-        categoryCode: 'CREW-FOD',
-        categoryName: 'Crew Food & Provisions',
-        parentCategoryId: '2',
+        coaCode: 'CREW-FOD',
+        coaName: 'Crew Food & Provisions',
+        companyId: '1',
+        vendorCoaCode: 'VND-FOD',
+        parentCOAId: '2',
         status: 'Active',
         createdAt: '2024-01-10',
         updatedAt: '2024-01-10',
@@ -68,16 +80,20 @@ const mockAccounts: ChartOfAccount[] = [
   },
   {
     id: '3',
-    categoryCode: 'MAINT',
-    categoryName: 'Maintenance',
+    coaCode: 'MAINT',
+    coaName: 'Maintenance',
+    companyId: '1',
+    vendorCoaCode: 'VND-MAINT',
     status: 'Active',
     createdAt: '2024-01-08',
     updatedAt: '2024-01-08',
   },
   {
     id: '4',
-    categoryCode: 'INS',
-    categoryName: 'Insurance',
+    coaCode: 'INS',
+    coaName: 'Insurance',
+    companyId: '1',
+    vendorCoaCode: 'VND-INS',
     status: 'Active',
     createdAt: '2024-01-05',
     updatedAt: '2024-01-05',
@@ -122,9 +138,9 @@ function AccountItem({ account, level, onEdit, onView, onDelete }: AccountItemPr
               <div className="flex-1">
                 <div className="flex items-center space-x-3">
                   <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
-                    {account.categoryCode}
+                    {account.coaCode}
                   </span>
-                  <span className="font-semibold text-foreground">{account.categoryName}</span>
+                  <span className="font-semibold text-foreground">{account.coaName}</span>
                   <Badge 
                     variant={account.status === 'Active' ? 'default' : 'secondary'}
                     className={account.status === 'Active' ? 'bg-success text-success-foreground' : ''}
@@ -178,8 +194,8 @@ export default function AccountList() {
 
   const filteredAccounts = accounts.filter(account => {
     const matchesSearch = (acc: ChartOfAccount): boolean => {
-      const matches = acc.categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                     acc.categoryCode.toLowerCase().includes(searchTerm.toLowerCase());
+      const matches = acc.coaName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                     acc.coaCode.toLowerCase().includes(searchTerm.toLowerCase());
       
       if (matches) return true;
       

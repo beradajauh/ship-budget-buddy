@@ -43,6 +43,8 @@ export interface ChartOfAccount {
   id: string;
   coaCode: string;
   coaName: string;
+  companyId: string;
+  vendorCoaCode: string;
   parentCOAId?: string;
   status: 'Active' | 'Inactive';
   children?: ChartOfAccount[];
