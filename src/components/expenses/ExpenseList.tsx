@@ -144,12 +144,12 @@ export default function ExpenseList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Expense Submission</h2>
-          <p className="text-muted-foreground">Manage vessel expense submissions from vendors</p>
+          <h2 className="text-2xl font-bold text-foreground">Budget Realization</h2>
+          <p className="text-muted-foreground">Manage vessel budget realization from vendors</p>
         </div>
         <Button onClick={handleCreate} className="bg-primary hover:bg-primary-dark">
           <Plus className="h-4 w-4 mr-2" />
-          Submit Expenses
+          Submit Realization
         </Button>
       </div>
 
@@ -158,7 +158,7 @@ export default function ExpenseList() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search expenses..."
+            placeholder="Search realizations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -169,7 +169,7 @@ export default function ExpenseList() {
       {/* Expenses table */}
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Expense Submissions</CardTitle>
+          <CardTitle className="text-foreground">Budget Realizations</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -179,7 +179,7 @@ export default function ExpenseList() {
                 <TableHead>Vessel</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Vendor</TableHead>
-                <TableHead>Total Expense</TableHead>
+                <TableHead>Total Realization</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -238,9 +238,9 @@ export default function ExpenseList() {
           {filteredExpenses.length === 0 && (
             <div className="text-center py-10">
               <Receipt className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No expenses found</h3>
+              <h3 className="text-lg font-medium text-foreground mb-2">No realizations found</h3>
               <p className="text-muted-foreground">
-                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by submitting your first expense.'}
+                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by submitting your first realization.'}
               </p>
             </div>
           )}
