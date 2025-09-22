@@ -108,6 +108,37 @@ export interface ExpenseDetail {
   coa?: ChartOfAccount;
 }
 
+export interface DebitNoteHeader {
+  id: string;
+  expenseId: string;
+  companyId: string;
+  vesselId: string;
+  vendorId: string;
+  debitNoteNo: string; // auto generate
+  debitNoteDate: string;
+  totalAmount: number; // over budget amount
+  status: 'Draft' | 'Submitted' | 'Approved' | 'Paid' | 'Rejected';
+  linkedAPDoc?: string; // SAP connection
+  company?: Company;
+  vessel?: Vessel;
+  vendor?: Vendor;
+  expense?: ExpenseHeader;
+  debitNoteDetails?: DebitNoteDetail[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DebitNoteDetail {
+  id: string;
+  debitNoteId: string;
+  expenseDetailId: string;
+  categoryId: string;
+  description: string;
+  amount: number;
+  expenseDetail?: ExpenseDetail;
+  coa?: ChartOfAccount;
+}
+
 export type FormMode = 'create' | 'edit' | 'view';
 
 export interface PaginationParams {

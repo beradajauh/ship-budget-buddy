@@ -35,6 +35,7 @@ const navigation = [
     children: [
       { name: 'Monthly Budget', href: '/budgets', icon: DollarSign },
       { name: 'Budget Realization', href: '/expenses', icon: FileText },
+      { name: 'Debit Notes', href: '/debitnotes', icon: Users },
     ],
   },
 ];
