@@ -1,404 +1,295 @@
-import { Building2, Ship, Users, FileText, TrendingUp, AlertTriangle, DollarSign } from 'lucide-react';
+import React, { useState } from 'react';
+import { Building2, Ship, Filter, Calendar, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
-// Mock data for budget details with hierarchical COA
-const mockBudgetDetails = [
-  {
-    budgetId: 'budget-001',
-    period: '2024-01',
-    companyName: 'Ocean Shipping Ltd',
-    vesselName: 'MV Sinar Harapan',
-    totalBudget: 500000,
-    totalRealized: 450000,
-    variance: 50000,
-    status: 'Active',
-    coaDetails: [
-      {
-        id: 'fuel-main',
-        coaCode: 'FUEL',
-        coaName: 'Fuel Costs',
-        level: 1,
-        budgetAmount: 200000,
-        realizedAmount: 185000,
-        variance: 15000,
-        children: [
-          {
-            id: 'fuel-oil',
-            coaCode: 'FUEL-001',
-            coaName: 'Fuel Oil',
-            level: 2,
-            budgetAmount: 150000,
-            realizedAmount: 140000,
-            variance: 10000,
-            children: []
-          },
-          {
-            id: 'gas-oil',
-            coaCode: 'FUEL-002',
-            coaName: 'Gas Oil',
-            level: 2,
-            budgetAmount: 50000,
-            realizedAmount: 45000,
-            variance: 5000,
-            children: []
-          }
-        ]
-      },
-      {
-        id: 'crew-main',
-        coaCode: 'CREW',
-        coaName: 'Crew Expenses',
-        level: 1,
-        budgetAmount: 150000,
-        realizedAmount: 155000,
-        variance: -5000,
-        children: [
-          {
-            id: 'crew-salary',
-            coaCode: 'CREW-001',
-            coaName: 'Basic Salary',
-            level: 2,
-            budgetAmount: 100000,
-            realizedAmount: 100000,
-            variance: 0,
-            children: []
-          },
-          {
-            id: 'crew-overtime',
-            coaCode: 'CREW-002',
-            coaName: 'Overtime Pay',
-            level: 2,
-            budgetAmount: 50000,
-            realizedAmount: 55000,
-            variance: -5000,
-            children: []
-          }
-        ]
-      },
-      {
-        id: 'maintenance',
-        coaCode: 'MAINT',
-        coaName: 'Maintenance',
-        level: 1,
-        budgetAmount: 100000,
-        realizedAmount: 75000,
-        variance: 25000,
-        children: [
-          {
-            id: 'engine-maint',
-            coaCode: 'MAINT-001',
-            coaName: 'Engine Maintenance',
-            level: 2,
-            budgetAmount: 70000,
-            realizedAmount: 50000,
-            variance: 20000,
-            children: []
-          },
-          {
-            id: 'hull-maint',
-            coaCode: 'MAINT-002',
-            coaName: 'Hull Maintenance',
-            level: 2,
-            budgetAmount: 30000,
-            realizedAmount: 25000,
-            variance: 5000,
-            children: []
-          }
-        ]
-      }
-    ]
-  },
-  {
-    budgetId: 'budget-002',
-    period: '2024-01',
-    companyName: 'Ocean Shipping Ltd',
-    vesselName: 'TB Nusantara',
-    totalBudget: 300000,
-    totalRealized: 320000,
-    variance: -20000,
-    status: 'Over Budget',
-    coaDetails: [
-      {
-        id: 'fuel-main-2',
-        coaCode: 'FUEL',
-        coaName: 'Fuel Costs',
-        level: 1,
-        budgetAmount: 120000,
-        realizedAmount: 135000,
-        variance: -15000,
-        children: [
-          {
-            id: 'fuel-oil-2',
-            coaCode: 'FUEL-001',
-            coaName: 'Fuel Oil',
-            level: 2,
-            budgetAmount: 90000,
-            realizedAmount: 100000,
-            variance: -10000,
-            children: []
-          },
-          {
-            id: 'gas-oil-2',
-            coaCode: 'FUEL-002',
-            coaName: 'Gas Oil',
-            level: 2,
-            budgetAmount: 30000,
-            realizedAmount: 35000,
-            variance: -5000,
-            children: []
-          }
-        ]
-      }
-    ]
-  }
+// Mock data for vessels and periods
+const mockVessels = [
+  { id: 'vessel-001', name: 'MV SRIWANGI II', companyId: 'company-001' },
+  { id: 'vessel-002', name: 'MV Sinar Harapan', companyId: 'company-001' },
+  { id: 'vessel-003', name: 'TB Nusantara', companyId: 'company-001' },
 ];
 
-const stats = [
+const mockPeriods = [
+  { id: 'period-001', period: '2025-06', label: 'June 2025' },
+  { id: 'period-002', period: '2025-05', label: 'May 2025' },
+  { id: 'period-003', period: '2025-04', label: 'April 2025' },
+];
+
+// Mock data for cost outside budget details
+const mockCostDetails = [
   {
-    name: 'Total Companies',
-    value: '8',
-    icon: Building2,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
+    transactionDate: '30/06/2025',
+    narration: 'DBN009104/25, CHARTERER PROVISION CONSUMPTION (USD), SEACHEF, FOR THE MONTH OF JUNE 2025',
+    voucherNo: '',
+    transCurr: 'USD',
+    transAmount: 250.93,
+    exDiff: 1.0000,
+    net: 250.93,
+    coaCode: '6000491013',
+    coaName: 'OPERATION COSTS - CHARTERER\'S ACCOUNT'
   },
   {
-    name: 'Active Vessels',
-    value: '12',
-    icon: Ship,
-    color: 'text-accent',
-    bg: 'bg-accent/10',
+    transactionDate: '30/06/2025',
+    narration: 'CHARTERER\'S SLOPCHEST CONSUMPTION - JUNE 2025',
+    voucherNo: '',
+    transCurr: 'USD',
+    transAmount: 296.75,
+    exDiff: 1.0000,
+    net: 296.75,
+    coaCode: '6000491013',
+    coaName: 'OPERATION COSTS - CHARTERER\'S ACCOUNT'
   },
   {
-    name: 'Total Budget This Month',
-    value: '$800K',
-    icon: DollarSign,
-    color: 'text-success',
-    bg: 'bg-success/10',
+    transactionDate: '01/06/2025',
+    narration: 'HANSEATIC MARITIME HEALTH HMH GMBH - ANNUAL FLAT FEE AS PER CONSULTANT SERVICE AGREEMENT ENTERED INTO AS OF 01/01/2024, DISB/001486/25',
+    voucherNo: '',
+    transCurr: 'USD',
+    transAmount: -1600.00,
+    exDiff: 1.0000,
+    net: -1600.00,
+    coaCode: '6503211019',
+    coaName: 'OPERATION COSTS OWNERS A/C - NON TECHNICAL ITEMS'
   },
   {
-    name: 'Budget Variance',
-    value: '+$30K',
-    icon: TrendingUp,
-    color: 'text-warning',
-    bg: 'bg-warning/10',
+    transactionDate: '30/06/2025',
+    narration: 'EXTRA CREW LUMPSUM COSTS - OS FANTONIAL, D CLIENT FOR MAY 1 TO 25, 2025',
+    voucherNo: '',
+    transCurr: 'USD',
+    transAmount: 652.50,
+    exDiff: 1.0000,
+    net: 652.50,
+    coaCode: '6503211018',
+    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT'
   },
+  {
+    transactionDate: '30/06/2025',
+    narration: 'EXTRA CREW PROVISION CONSUMPTION - OS FANTONIAL, D CLIENT FOR MAY 1 TO 25, 2025',
+    voucherNo: '',
+    transCurr: 'USD',
+    transAmount: 212.50,
+    exDiff: 1.0000,
+    net: 212.50,
+    coaCode: '6503211018',
+    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT'
+  },
+  {
+    transactionDate: '30/06/2025',
+    narration: 'EXTRA CREW LUMPSUM COSTS - JUNIOR OFFICER TAMPI, A CHRISTOPHER FOR MAY 2025',
+    voucherNo: '',
+    transCurr: 'USD',
+    transAmount: 973.40,
+    exDiff: 1.0000,
+    net: 973.40,
+    coaCode: '6503211018',
+    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT'
+  },
+  {
+    transactionDate: '30/06/2025',
+    narration: 'EXTRA CREW PROVISION CONSUMPTION - JUNIOR OFFICER TAMPI, A CHRISTOPHER FOR MAY 2025',
+    voucherNo: '',
+    transCurr: 'USD',
+    transAmount: 263.50,
+    exDiff: 1.0000,
+    net: 263.50,
+    coaCode: '6503211018',
+    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT'
+  }
 ];
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-const getVarianceColor = (variance: number) => {
-  if (variance > 0) return 'text-success';
-  if (variance < 0) return 'text-destructive';
-  return 'text-muted-foreground';
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Active': return 'bg-success text-success-foreground';
-    case 'Over Budget': return 'bg-destructive text-destructive-foreground';
-    case 'Under Budget': return 'bg-warning text-warning-foreground';
-    default: return 'bg-secondary text-secondary-foreground';
+  const absAmount = Math.abs(amount);
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(absAmount);
+  
+  if (amount < 0) {
+    return `(${formatted})`;
   }
+  return formatted;
 };
 
-const renderCoaRow = (coa: any, budgetId: string) => {
-  const rows = [];
-  
-  // Main COA row
-  rows.push(
-    <TableRow key={`${budgetId}-${coa.id}`} className={coa.level === 1 ? 'font-medium bg-muted/50' : ''}>
-      <TableCell style={{ paddingLeft: `${(coa.level - 1) * 20 + 16}px` }}>
-        {coa.coaCode} - {coa.coaName}
-      </TableCell>
-      <TableCell>{formatCurrency(coa.budgetAmount)}</TableCell>
-      <TableCell>{formatCurrency(coa.realizedAmount)}</TableCell>
-      <TableCell className={getVarianceColor(coa.variance)}>
-        {formatCurrency(Math.abs(coa.variance))} {coa.variance >= 0 ? '(Under)' : '(Over)'}
-      </TableCell>
-    </TableRow>
-  );
-  
-  // Children rows
-  coa.children?.forEach((child: any) => {
-    rows.push(...renderCoaRow(child, budgetId));
-  });
-  
-  return rows;
-};
 
 export default function Dashboard() {
+  const [selectedVessel, setSelectedVessel] = useState<string>('');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('');
+
+  // Filter data based on selection
+  const filteredData = mockCostDetails.filter(() => {
+    if (!selectedVessel || !selectedPeriod) return false;
+    return true; // In real app, filter based on vessel and period
+  });
+
+  // Group data by COA code for subtotals
+  const groupedData = filteredData.reduce((acc, item) => {
+    const key = item.coaCode;
+    if (!acc[key]) {
+      acc[key] = {
+        coaCode: item.coaCode,
+        coaName: item.coaName,
+        items: [],
+        total: 0
+      };
+    }
+    acc[key].items.push(item);
+    acc[key].total += item.net;
+    return acc;
+  }, {} as Record<string, any>);
+
+  const selectedVesselName = mockVessels.find(v => v.id === selectedVessel)?.name || '';
+  const selectedPeriodLabel = mockPeriods.find(p => p.id === selectedPeriod)?.label || '';
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-        <p className="text-muted-foreground">Overview of your ship management system</p>
+        <p className="text-muted-foreground">Cost Analysis - Outside Budget Report</p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <Card key={stat.name} className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.name}
-              </CardTitle>
-              <div className={`p-2 rounded-md ${stat.bg}`}>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Filters */}
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Vessel *</label>
+              <Select value={selectedVessel} onValueChange={setSelectedVessel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select vessel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockVessels.map((vessel) => (
+                    <SelectItem key={vessel.id} value={vessel.id}>
+                      {vessel.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Monthly Budget Period *</label>
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockPeriods.map((period) => (
+                    <SelectItem key={period.id} value={period.id}>
+                      {period.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end">
+              <Button variant="outline" className="w-full">
+                <Download className="h-4 w-4 mr-2" />
+                Export to Excel
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Monthly Budget Details */}
-      <div className="grid grid-cols-1 gap-6">
+      {/* Cost Details Report */}
+      {selectedVessel && selectedPeriod && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Monthly Budget Details - January 2024
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {mockBudgetDetails.map((budget) => (
-              <div key={budget.budgetId} className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                  <div>
-                    <h4 className="font-semibold text-foreground">{budget.vesselName}</h4>
-                    <p className="text-sm text-muted-foreground">{budget.companyName}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Total Budget</p>
-                      <p className="font-semibold">{formatCurrency(budget.totalBudget)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Realized</p>
-                      <p className="font-semibold">{formatCurrency(budget.totalRealized)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Variance</p>
-                      <p className={`font-semibold ${getVarianceColor(budget.variance)}`}>
-                        {formatCurrency(Math.abs(budget.variance))} {budget.variance >= 0 ? '(Under)' : '(Over)'}
-                      </p>
-                    </div>
-                    <Badge className={getStatusColor(budget.status)}>
-                      {budget.status}
-                    </Badge>
-                  </div>
-                </div>
-
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Chart of Account</TableHead>
-                      <TableHead>Budget Amount</TableHead>
-                      <TableHead>Realized Amount</TableHead>
-                      <TableHead>Variance</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {budget.coaDetails.map((coa) => renderCoaRow(coa, budget.budgetId))}
-                  </TableBody>
-                </Table>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">Recent Activity</CardTitle>
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-bold text-foreground">{selectedVesselName}</h3>
+              <h4 className="text-lg font-semibold text-foreground">
+                LIST OF COST OUTSIDE BUDGET FOR {selectedPeriodLabel.toUpperCase()}
+              </h4>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-foreground">Budget approved for MV Sinar Harapan</p>
-                  <p className="text-xs text-muted-foreground">2 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-foreground">Debit note created for TB Nusantara</p>
-                  <p className="text-xs text-muted-foreground">4 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-destructive rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-foreground">Over-budget alert: Crew expenses</p>
-                  <p className="text-xs text-muted-foreground">5 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-success rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-foreground">Monthly report submitted</p>
-                  <p className="text-xs text-muted-foreground">1 day ago</p>
-                </div>
-              </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b-2 border-border">
+                    <TableHead className="text-center font-bold text-foreground border-r border-border">Transaction Date</TableHead>
+                    <TableHead className="text-center font-bold text-foreground border-r border-border">Narration</TableHead>
+                    <TableHead className="text-center font-bold text-foreground border-r border-border">Voucher No.</TableHead>
+                    <TableHead className="text-center font-bold text-foreground border-r border-border">Trans. Curr.</TableHead>
+                    <TableHead className="text-center font-bold text-foreground border-r border-border">Trans. Amount</TableHead>
+                    <TableHead className="text-center font-bold text-foreground border-r border-border">Ex Diff</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">Net</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.values(groupedData).map((group: any) => (
+                    <React.Fragment key={group.coaCode}>
+                      {/* COA Header Row */}
+                      <TableRow className="bg-muted/50">
+                        <TableCell colSpan={7} className="font-bold text-foreground p-2">
+                          {group.coaCode} {group.coaName}
+                        </TableCell>
+                      </TableRow>
+                      
+                      {/* Detail Rows */}
+                      {group.items.map((item: any, index: number) => (
+                        <TableRow key={`${group.coaCode}-${index}`} className="border-b border-border/50">
+                          <TableCell className="text-center border-r border-border/50 py-1 px-2">
+                            {item.transactionDate}
+                          </TableCell>
+                          <TableCell className="border-r border-border/50 py-1 px-2 text-sm">
+                            {item.narration}
+                          </TableCell>
+                          <TableCell className="text-center border-r border-border/50 py-1 px-2">
+                            {item.voucherNo}
+                          </TableCell>
+                          <TableCell className="text-center border-r border-border/50 py-1 px-2">
+                            {item.transCurr}
+                          </TableCell>
+                          <TableCell className="text-right border-r border-border/50 py-1 px-2">
+                            {formatCurrency(item.transAmount)}
+                          </TableCell>
+                          <TableCell className="text-right border-r border-border/50 py-1 px-2">
+                            {item.exDiff.toFixed(4)}
+                          </TableCell>
+                          <TableCell className="text-right py-1 px-2">
+                            {formatCurrency(item.net)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      
+                      {/* Subtotal Row */}
+                      <TableRow className="border-b-2 border-border">
+                        <TableCell colSpan={6} className="text-right font-bold py-2 px-2"></TableCell>
+                        <TableCell className="text-right font-bold py-2 px-2 bg-muted/30">
+                          {formatCurrency(group.total)}
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
+      )}
 
+      {/* Empty State */}
+      {(!selectedVessel || !selectedPeriod) && (
         <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Budget Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-destructive/10 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium text-foreground">TB Nusantara - Fuel Costs</p>
-                  <p className="text-xs text-muted-foreground">11% over budget</p>
-                </div>
-                <Badge className="bg-destructive text-destructive-foreground">
-                  Over Budget
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium text-foreground">MV Sinar Harapan - Crew Overtime</p>
-                  <p className="text-xs text-muted-foreground">10% over budget</p>
-                </div>
-                <Badge className="bg-warning text-warning-foreground">
-                  Warning
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium text-foreground">MV Sinar Harapan - Maintenance</p>
-                  <p className="text-xs text-muted-foreground">25% under budget</p>
-                </div>
-                <Badge className="bg-success text-success-foreground">
-                  Under Budget
-                </Badge>
-              </div>
-            </div>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Ship className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Select Vessel and Period</h3>
+            <p className="text-muted-foreground text-center">
+              Please select a vessel and monthly budget period to view the cost details report.
+            </p>
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 }
