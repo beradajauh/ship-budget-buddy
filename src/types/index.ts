@@ -16,11 +16,21 @@ export interface Vessel {
   vesselName: string;
   imoNumber?: string;
   ownedByCompanyId: string;
-  managedByVendorId: string;
   vesselType: string;
   buildYear: number;
   status: 'Active' | 'Inactive';
   company?: Company;
+  vendors?: VesselVendor[]; // Many-to-many relationship
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VesselVendor {
+  id: string;
+  vesselId: string;
+  vendorId: string;
+  isPrimary: boolean;
+  vessel?: Vessel;
   vendor?: Vendor;
   createdAt: string;
   updatedAt: string;
@@ -57,7 +67,8 @@ export interface BudgetHeader {
   id: string;
   companyId: string;
   vesselId: string;
-  period: string; // YYYY-MM format
+  period: string; // YYYY-MM or YYYY format (monthly or yearly)
+  budgetType: 'Monthly' | 'Yearly';
   currency: string;
   totalBudget: number;
   status: 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'Closed';
@@ -116,6 +127,7 @@ export interface DebitNoteHeader {
   vendorId: string;
   debitNoteNo: string; // auto generate
   debitNoteDate: string;
+  vendorInvoiceNo: string; // vendor invoice number
   totalAmount: number; // over budget amount
   status: 'Draft' | 'Submitted' | 'Approved' | 'Paid' | 'Rejected';
   linkedAPDoc?: string; // SAP connection

@@ -38,10 +38,10 @@ const mockVessels: Vessel[] = [
     vesselCode: 'MV001',
     vesselName: 'MV Sinar Harapan',
     ownedByCompanyId: 'comp-001',
-    managedByVendorId: 'vendor-001',
     vesselType: 'Container',
     buildYear: 2020,
     status: 'Active',
+    vendors: [{ id: '1', vesselId: 'vessel-001', vendorId: 'vendor-001', isPrimary: true }] as any,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
   }
@@ -128,9 +128,14 @@ export default function DebitNoteForm({ mode, debitNote, onSave, onClose }: Debi
     vesselId: debitNote?.vesselId || '',
     vendorId: debitNote?.vendorId || '',
     debitNoteDate: debitNote?.debitNoteDate || new Date().toISOString().split('T')[0],
+    vendorInvoiceNo: debitNote?.vendorInvoiceNo || '',
     status: debitNote?.status || 'Draft',
     linkedAPDoc: debitNote?.linkedAPDoc || '',
   });
+
+  const [existingInvoices, setExistingInvoices] = useState<string[]>([
+    'INV-2024-001', 'INV-2024-002', 'INV-2024-003' // Mock existing invoices
+  ]);
 
   const [debitNoteDetails, setDebitNoteDetails] = useState<DebitNoteDetail[]>(
     debitNote?.debitNoteDetails || []
@@ -145,6 +150,12 @@ export default function DebitNoteForm({ mode, debitNote, onSave, onClose }: Debi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for duplicate invoice
+    if (formData.vendorInvoiceNo && existingInvoices.includes(formData.vendorInvoiceNo)) {
+      alert('Warning: This vendor invoice number already exists in the system!');
+      return;
+    }
     
     const debitNoteData = {
       ...formData,
@@ -286,6 +297,24 @@ export default function DebitNoteForm({ mode, debitNote, onSave, onClose }: Debi
                   readOnly={isReadonly}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vendorInvoiceNo">Vendor Invoice No *</Label>
+                <Input
+                  id="vendorInvoiceNo"
+                  value={formData.vendorInvoiceNo}
+                  onChange={(e) => handleChange('vendorInvoiceNo', e.target.value)}
+                  placeholder="Enter vendor invoice number"
+                  readOnly={isReadonly}
+                  required
+                  className={existingInvoices.includes(formData.vendorInvoiceNo) ? 'border-destructive' : ''}
+                />
+                {formData.vendorInvoiceNo && existingInvoices.includes(formData.vendorInvoiceNo) && (
+                  <p className="text-sm text-destructive">
+                    ⚠️ This invoice number already exists in the system
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

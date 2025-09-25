@@ -16,12 +16,11 @@ const mockVessels: Vessel[] = [
     vesselName: 'MV Sinar Harapan',
     imoNumber: '9876543',
     ownedByCompanyId: '1',
-    managedByVendorId: '1',
     vesselType: 'Tanker',
     buildYear: 2018,
     status: 'Active',
     company: { id: '1', companyName: 'PT Pelayaran Nusantara' } as any,
-    vendor: { id: '1', vendorName: 'PT Marina Services' } as any,
+    vendors: [{ id: '1', vesselId: '1', vendorId: '1', isPrimary: true, vendor: { id: '1', vendorName: 'PT Marina Services' } as any }] as any,
     createdAt: '2024-01-15',
     updatedAt: '2024-01-15',
   },
@@ -30,12 +29,11 @@ const mockVessels: Vessel[] = [
     vesselCode: 'TB002',
     vesselName: 'TB Nusantara',
     ownedByCompanyId: '2',
-    managedByVendorId: '2',
     vesselType: 'Tug',
     buildYear: 2020,
     status: 'Active',
     company: { id: '2', companyName: 'PT Samudera Jaya' } as any,
-    vendor: { id: '2', vendorName: 'PT Ocean Management' } as any,
+    vendors: [{ id: '2', vesselId: '2', vendorId: '2', isPrimary: true, vendor: { id: '2', vendorName: 'PT Ocean Management' } as any }] as any,
     createdAt: '2024-01-10',
     updatedAt: '2024-01-10',
   },
@@ -153,7 +151,7 @@ export default function VesselList() {
                     </div>
                   </TableCell>
                   <TableCell>{vessel.company?.companyName}</TableCell>
-                  <TableCell>{vessel.vendor?.vendorName}</TableCell>
+                  <TableCell>{vessel.vendors?.[0]?.vendor?.vendorName}</TableCell>
                   <TableCell>
                     <Badge 
                       variant={vessel.status === 'Active' ? 'default' : 'secondary'}

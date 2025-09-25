@@ -20,6 +20,11 @@ const navigation = [
     icon: Ship,
   },
   {
+    name: 'Budget Analysis',
+    href: '/budget-analysis',
+    icon: FileText,
+  },
+  {
     name: 'Master Data',
     icon: FileText,
     children: [

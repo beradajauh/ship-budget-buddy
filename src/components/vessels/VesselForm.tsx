@@ -40,7 +40,7 @@ export default function VesselForm({ mode, vessel, onSave, onClose }: VesselForm
     vesselName: vessel?.vesselName || '',
     imoNumber: vessel?.imoNumber || '',
     ownedByCompanyId: vessel?.ownedByCompanyId || '',
-    managedByVendorId: vessel?.managedByVendorId || '',
+    primaryVendorId: vessel?.vendors?.[0]?.vendorId || '',
     vesselType: vessel?.vesselType || '',
     buildYear: vessel?.buildYear || new Date().getFullYear(),
     status: vessel?.status || 'Active',
@@ -196,15 +196,15 @@ export default function VesselForm({ mode, vessel, onSave, onClose }: VesselForm
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="managedByVendorId">Managed by Vendor *</Label>
+                <Label htmlFor="primaryVendorId">Primary Vendor *</Label>
                 <Select 
-                  value={formData.managedByVendorId} 
-                  onValueChange={(value) => handleChange('managedByVendorId', value)}
+                  value={formData.primaryVendorId} 
+                  onValueChange={(value) => handleChange('primaryVendorId', value)}
                   disabled={isReadonly}
                   required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select managing vendor" />
+                    <SelectValue placeholder="Select primary vendor" />
                   </SelectTrigger>
                   <SelectContent>
                     {mockVendors.map((vendor) => (
