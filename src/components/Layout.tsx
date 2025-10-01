@@ -25,6 +25,11 @@ const navigation = [
     icon: FileText,
   },
   {
+    name: 'DN Analysis',
+    href: '/debitnote-analysis',
+    icon: FileText,
+  },
+  {
     name: 'Master Data',
     icon: FileText,
     children: [
@@ -42,7 +47,6 @@ const navigation = [
       { name: 'Budget Realization', href: '/expenses', icon: FileText },
       { name: 'Debit Notes', href: '/debitnotes', icon: Users },
       { name: 'DN Payments', href: '/debitnote-payments', icon: DollarSign },
-      { name: 'DN Analysis', href: '/debitnote-analysis', icon: FileText },
     ],
   },
 ];
