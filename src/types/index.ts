@@ -151,6 +151,21 @@ export interface DebitNoteDetail {
   coa?: ChartOfAccount;
 }
 
+export interface DebitNotePayment {
+  id: string;
+  debitNoteId: string;
+  paymentDate: string;
+  referenceAPNo: string;
+  outgoingPaymentNo: string;
+  paymentAmount: number;
+  currency: string;
+  status: 'Pending' | 'Completed' | 'Failed';
+  notes?: string;
+  debitNote?: DebitNoteHeader;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type FormMode = 'create' | 'edit' | 'view';
 
 export interface PaginationParams {

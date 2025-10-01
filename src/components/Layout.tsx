@@ -41,6 +41,8 @@ const navigation = [
       { name: 'Monthly Budget', href: '/budgets', icon: DollarSign },
       { name: 'Budget Realization', href: '/expenses', icon: FileText },
       { name: 'Debit Notes', href: '/debitnotes', icon: Users },
+      { name: 'DN Payments', href: '/debitnote-payments', icon: DollarSign },
+      { name: 'DN Analysis', href: '/debitnote-analysis', icon: FileText },
     ],
   },
 ];

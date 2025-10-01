@@ -23,80 +23,87 @@ const mockPeriods = [
 const mockCostDetails = [
   {
     transactionDate: '30/06/2025',
+    coaCode: '6000491013',
+    coaName: 'OPERATION COSTS - CHARTERER\'S ACCOUNT',
+    vendorCoaCode: 'VC-001',
     narration: 'DBN009104/25, CHARTERER PROVISION CONSUMPTION (USD), SEACHEF, FOR THE MONTH OF JUNE 2025',
     voucherNo: '',
     transCurr: 'USD',
     transAmount: 250.93,
     exDiff: 1.0000,
-    net: 250.93,
-    coaCode: '6000491013',
-    coaName: 'OPERATION COSTS - CHARTERER\'S ACCOUNT'
+    net: 250.93
   },
   {
     transactionDate: '30/06/2025',
+    coaCode: '6000491013',
+    coaName: 'OPERATION COSTS - CHARTERER\'S ACCOUNT',
+    vendorCoaCode: 'VC-001',
     narration: 'CHARTERER\'S SLOPCHEST CONSUMPTION - JUNE 2025',
     voucherNo: '',
     transCurr: 'USD',
     transAmount: 296.75,
     exDiff: 1.0000,
-    net: 296.75,
-    coaCode: '6000491013',
-    coaName: 'OPERATION COSTS - CHARTERER\'S ACCOUNT'
+    net: 296.75
   },
   {
     transactionDate: '01/06/2025',
+    coaCode: '6503211019',
+    coaName: 'OPERATION COSTS OWNERS A/C - NON TECHNICAL ITEMS',
+    vendorCoaCode: 'VC-002',
     narration: 'HANSEATIC MARITIME HEALTH HMH GMBH - ANNUAL FLAT FEE AS PER CONSULTANT SERVICE AGREEMENT ENTERED INTO AS OF 01/01/2024, DISB/001486/25',
     voucherNo: '',
     transCurr: 'USD',
     transAmount: -1600.00,
     exDiff: 1.0000,
-    net: -1600.00,
-    coaCode: '6503211019',
-    coaName: 'OPERATION COSTS OWNERS A/C - NON TECHNICAL ITEMS'
+    net: -1600.00
   },
   {
     transactionDate: '30/06/2025',
+    coaCode: '6503211018',
+    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT',
+    vendorCoaCode: 'VC-003',
     narration: 'EXTRA CREW LUMPSUM COSTS - OS FANTONIAL, D CLIENT FOR MAY 1 TO 25, 2025',
     voucherNo: '',
     transCurr: 'USD',
     transAmount: 652.50,
     exDiff: 1.0000,
-    net: 652.50,
-    coaCode: '6503211018',
-    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT'
+    net: 652.50
   },
   {
     transactionDate: '30/06/2025',
+    coaCode: '6503211018',
+    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT',
+    vendorCoaCode: 'VC-003',
     narration: 'EXTRA CREW PROVISION CONSUMPTION - OS FANTONIAL, D CLIENT FOR MAY 1 TO 25, 2025',
     voucherNo: '',
     transCurr: 'USD',
     transAmount: 212.50,
     exDiff: 1.0000,
-    net: 212.50,
-    coaCode: '6503211018',
-    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT'
+    net: 212.50
   },
   {
     transactionDate: '30/06/2025',
+    coaCode: '6503211018',
+    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT',
+    vendorCoaCode: 'VC-003',
     narration: 'EXTRA CREW LUMPSUM COSTS - JUNIOR OFFICER TAMPI, A CHRISTOPHER FOR MAY 2025',
     voucherNo: '',
     transCurr: 'USD',
     transAmount: 973.40,
     exDiff: 1.0000,
-    net: 973.40,
-    coaCode: '6503211018',
-    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT'
+    net: 973.40
   },
   {
     transactionDate: '30/06/2025',
+    coaCode: '6503211018',
+    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT',
+    vendorCoaCode: 'VC-003',
     narration: 'EXTRA CREW PROVISION CONSUMPTION - JUNIOR OFFICER TAMPI, A CHRISTOPHER FOR MAY 2025',
     voucherNo: '',
     transCurr: 'USD',
     transAmount: 263.50,
     exDiff: 1.0000,
-    net: 263.50,
-    coaCode: '6503211018',
-    coaName: 'OPERATION COSTS - OWNER\'S ACCOUNT'
+    net: 263.50
   }
 ];
 
@@ -217,6 +224,8 @@ export default function BudgetAnalysis() {
                 <TableHeader>
                   <TableRow className="border-b-2 border-border">
                     <TableHead className="text-center font-bold text-foreground border-r border-border">Transaction Date</TableHead>
+                    <TableHead className="text-center font-bold text-foreground border-r border-border">COA</TableHead>
+                    <TableHead className="text-center font-bold text-foreground border-r border-border">COA Vendor</TableHead>
                     <TableHead className="text-center font-bold text-foreground border-r border-border">Narration</TableHead>
                     <TableHead className="text-center font-bold text-foreground border-r border-border">Voucher No.</TableHead>
                     <TableHead className="text-center font-bold text-foreground border-r border-border">Trans. Curr.</TableHead>
@@ -230,7 +239,7 @@ export default function BudgetAnalysis() {
                     <React.Fragment key={group.coaCode}>
                       {/* COA Header Row */}
                       <TableRow className="bg-muted/50">
-                        <TableCell colSpan={7} className="font-bold text-foreground p-2">
+                        <TableCell colSpan={9} className="font-bold text-foreground p-2">
                           {group.coaCode} {group.coaName}
                         </TableCell>
                       </TableRow>
@@ -240,6 +249,12 @@ export default function BudgetAnalysis() {
                         <TableRow key={`${group.coaCode}-${index}`} className="border-b border-border/50">
                           <TableCell className="text-center border-r border-border/50 py-1 px-2">
                             {item.transactionDate}
+                          </TableCell>
+                          <TableCell className="text-center border-r border-border/50 py-1 px-2">
+                            {item.coaCode}
+                          </TableCell>
+                          <TableCell className="text-center border-r border-border/50 py-1 px-2">
+                            {item.vendorCoaCode}
                           </TableCell>
                           <TableCell className="border-r border-border/50 py-1 px-2 text-sm">
                             {item.narration}
@@ -264,7 +279,7 @@ export default function BudgetAnalysis() {
                       
                       {/* Subtotal Row */}
                       <TableRow className="border-b-2 border-border">
-                        <TableCell colSpan={6} className="text-right font-bold py-2 px-2"></TableCell>
+                        <TableCell colSpan={8} className="text-right font-bold py-2 px-2"></TableCell>
                         <TableCell className="text-right font-bold py-2 px-2 bg-muted/30">
                           {formatCurrency(group.total)}
                         </TableCell>
