@@ -419,65 +419,76 @@ export default function DebitNoteForm({ mode, debitNote, onSave, onClose }: Debi
               <TableHeader>
                 <TableRow>
                   <TableHead>Category</TableHead>
+                  <TableHead>Sub Account Name</TableHead>
+                  <TableHead>Invoice No</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Amount</TableHead>
                   {!isReadonly && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {debitNoteDetails.map((detail, index) => (
-                  <TableRow key={detail.id}>
-                    <TableCell>
-                      <Select 
-                        value={detail.categoryId} 
-                        onValueChange={(value) => updateDebitNoteDetail(index, 'categoryId', value)}
-                        disabled={isReadonly}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select COA" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockCategories.map((coa) => (
-                            <SelectItem key={coa.id} value={coa.id}>
-                              {coa.coaName} ({coa.coaCode})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Textarea
-                        value={detail.description}
-                        onChange={(e) => updateDebitNoteDetail(index, 'description', e.target.value)}
-                        placeholder="Detail description"
-                        readOnly={isReadonly}
-                        className="min-h-[60px]"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={detail.amount}
-                        onChange={(e) => updateDebitNoteDetail(index, 'amount', parseFloat(e.target.value) || 0)}
-                        placeholder="0.00"
-                        readOnly={isReadonly}
-                      />
-                    </TableCell>
-                    {!isReadonly && (
+                {debitNoteDetails.map((detail, index) => {
+                  const selectedCoa = mockCategories.find(coa => coa.id === detail.categoryId);
+                  return (
+                    <TableRow key={detail.id}>
                       <TableCell>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeDebitNoteDetail(index)}
-                          className="text-destructive hover:text-destructive"
+                        <Select 
+                          value={detail.categoryId} 
+                          onValueChange={(value) => updateDebitNoteDetail(index, 'categoryId', value)}
+                          disabled={isReadonly}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select COA" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {mockCategories.map((coa) => (
+                              <SelectItem key={coa.id} value={coa.id}>
+                                {coa.coaName} ({coa.coaCode})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))}
+                      <TableCell>
+                        {selectedCoa?.coaName || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {formData.vendorInvoiceNo || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Textarea
+                          value={detail.description}
+                          onChange={(e) => updateDebitNoteDetail(index, 'description', e.target.value)}
+                          placeholder="Detail description"
+                          readOnly={isReadonly}
+                          className="min-h-[60px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={detail.amount}
+                          onChange={(e) => updateDebitNoteDetail(index, 'amount', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          readOnly={isReadonly}
+                        />
+                      </TableCell>
+                      {!isReadonly && (
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeDebitNoteDetail(index)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
             

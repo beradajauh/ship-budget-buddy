@@ -15,6 +15,7 @@ import ExpenseList from "./components/expenses/ExpenseList";
 import DebitNoteList from "./components/debitnotes/DebitNoteList";
 import DebitNotePaymentList from "./components/debitnotes/DebitNotePaymentList";
 import DebitNoteAnalysis from "./components/debitnotes/DebitNoteAnalysis";
+import DebitNoteApproval from "./components/debitnotes/DebitNoteApproval";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="debitnotes" element={<DebitNoteList />} />
             <Route path="debitnote-payments" element={<DebitNotePaymentList />} />
             <Route path="debitnote-analysis" element={<DebitNoteAnalysis />} />
+            <Route path="debitnote-approval" element={<DebitNoteApproval />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

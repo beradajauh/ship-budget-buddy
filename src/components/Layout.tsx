@@ -30,6 +30,11 @@ const navigation = [
     icon: FileText,
   },
   {
+    name: 'DN Approval',
+    href: '/debitnote-approval',
+    icon: FileText,
+  },
+  {
     name: 'Master Data',
     icon: FileText,
     children: [
