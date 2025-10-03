@@ -419,7 +419,7 @@ export default function DebitNoteForm({ mode, debitNote, onSave, onClose }: Debi
               <TableHeader>
                 <TableRow>
                   <TableHead>Category</TableHead>
-                  <TableHead>Sub Account Name</TableHead>
+                  <TableHead>Sub Vendor</TableHead>
                   <TableHead>Invoice No</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Amount</TableHead>
@@ -450,10 +450,26 @@ export default function DebitNoteForm({ mode, debitNote, onSave, onClose }: Debi
                         </Select>
                       </TableCell>
                       <TableCell>
-                        {selectedCoa?.coaName || '-'}
+                        {isReadonly ? (
+                          <span>{detail.subVendor || '-'}</span>
+                        ) : (
+                          <Input
+                            value={detail.subVendor || ''}
+                            onChange={(e) => updateDebitNoteDetail(index, 'subVendor', e.target.value)}
+                            placeholder="Sub vendor name"
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
-                        {formData.vendorInvoiceNo || '-'}
+                        {isReadonly ? (
+                          <span>{detail.invoiceNo || '-'}</span>
+                        ) : (
+                          <Input
+                            value={detail.invoiceNo || ''}
+                            onChange={(e) => updateDebitNoteDetail(index, 'invoiceNo', e.target.value)}
+                            placeholder="Invoice number"
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
                         <Textarea
@@ -477,10 +493,9 @@ export default function DebitNoteForm({ mode, debitNote, onSave, onClose }: Debi
                         <TableCell>
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => removeDebitNoteDetail(index)}
-                            className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Check, X, Eye } from 'lucide-react';
 import { DebitNoteHeader } from '@/types';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import DebitNoteForm from './DebitNoteForm';
+import { toast } from 'sonner';
 
 // Mock data for debit notes pending approval
 const mockDebitNotesForApproval: DebitNoteHeader[] = [
@@ -162,10 +165,35 @@ export default function DebitNoteApproval() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [selectedDebitNote, setSelectedDebitNote] = useState<DebitNoteHeader | null>(null);
+  const [showRemarksDialog, setShowRemarksDialog] = useState(false);
+  const [remarksAction, setRemarksAction] = useState<'approve' | 'reject' | null>(null);
+  const [currentDebitNoteId, setCurrentDebitNoteId] = useState<string | null>(null);
+  const [remarks, setRemarks] = useState('');
 
-  // Find duplicates based on vendor invoice number
-  const invoiceNumbers = debitNotes.map(dn => dn.vendorInvoiceNo);
-  const duplicateInvoices = invoiceNumbers.filter((item, index) => invoiceNumbers.indexOf(item) !== index);
+  // Find duplicates based on vendor invoice number OR invoice number + sub vendor combination
+  const findDuplicates = () => {
+    const invoiceMap = new Map<string, number>();
+    const invoiceSubVendorMap = new Map<string, number>();
+    
+    debitNotes.forEach(dn => {
+      // Count invoice numbers
+      invoiceMap.set(dn.vendorInvoiceNo, (invoiceMap.get(dn.vendorInvoiceNo) || 0) + 1);
+      
+      // Count invoice + sub vendor combinations from details
+      if (dn.debitNoteDetails) {
+        dn.debitNoteDetails.forEach(detail => {
+          if (detail.invoiceNo && detail.subVendor) {
+            const key = `${detail.invoiceNo}-${detail.subVendor}`;
+            invoiceSubVendorMap.set(key, (invoiceSubVendorMap.get(key) || 0) + 1);
+          }
+        });
+      }
+    });
+    
+    return { invoiceMap, invoiceSubVendorMap };
+  };
+  
+  const { invoiceMap, invoiceSubVendorMap } = findDuplicates();
 
   const filteredDebitNotes = debitNotes.filter(dn =>
     dn.debitNoteNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -179,16 +207,38 @@ export default function DebitNoteApproval() {
     setShowForm(true);
   };
 
-  const handleApprove = (id: string) => {
-    setDebitNotes(debitNotes.map(dn => 
-      dn.id === id ? { ...dn, status: 'Approved' as const } : dn
-    ));
+  const handleApproveClick = (id: string) => {
+    setCurrentDebitNoteId(id);
+    setRemarksAction('approve');
+    setRemarks('');
+    setShowRemarksDialog(true);
   };
 
-  const handleReject = (id: string) => {
+  const handleRejectClick = (id: string) => {
+    setCurrentDebitNoteId(id);
+    setRemarksAction('reject');
+    setRemarks('');
+    setShowRemarksDialog(true);
+  };
+
+  const handleRemarksSubmit = () => {
+    if (!currentDebitNoteId || !remarksAction) return;
+    
+    if (!remarks.trim()) {
+      toast.error('Please enter remarks');
+      return;
+    }
+
+    const newStatus: 'Approved' | 'Rejected' = remarksAction === 'approve' ? 'Approved' : 'Rejected';
     setDebitNotes(debitNotes.map(dn => 
-      dn.id === id ? { ...dn, status: 'Rejected' as const } : dn
+      dn.id === currentDebitNoteId ? { ...dn, status: newStatus } : dn
     ));
+    
+    toast.success(`Debit note ${remarksAction === 'approve' ? 'approved' : 'rejected'} successfully`);
+    setShowRemarksDialog(false);
+    setCurrentDebitNoteId(null);
+    setRemarksAction(null);
+    setRemarks('');
   };
 
   const handleFormClose = () => {
@@ -227,8 +277,24 @@ export default function DebitNoteApproval() {
     }
   };
 
-  const isDuplicate = (vendorInvoiceNo: string) => {
-    return duplicateInvoices.includes(vendorInvoiceNo);
+  const isDuplicate = (debitNote: DebitNoteHeader) => {
+    // Check if invoice number is duplicated
+    if ((invoiceMap.get(debitNote.vendorInvoiceNo) || 0) > 1) {
+      return true;
+    }
+    
+    // Check if any detail has duplicated invoice + sub vendor combination
+    if (debitNote.debitNoteDetails) {
+      return debitNote.debitNoteDetails.some(detail => {
+        if (detail.invoiceNo && detail.subVendor) {
+          const key = `${detail.invoiceNo}-${detail.subVendor}`;
+          return (invoiceSubVendorMap.get(key) || 0) > 1;
+        }
+        return false;
+      });
+    }
+    
+    return false;
   };
 
   return (
@@ -269,7 +335,7 @@ export default function DebitNoteApproval() {
             </TableHeader>
             <TableBody>
               {filteredDebitNotes.map((debitNote) => {
-                const hasDuplicate = isDuplicate(debitNote.vendorInvoiceNo);
+                const hasDuplicate = isDuplicate(debitNote);
                 return (
                   <TableRow 
                     key={debitNote.id}
@@ -311,7 +377,7 @@ export default function DebitNoteApproval() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleApprove(debitNote.id)}
+                              onClick={() => handleApproveClick(debitNote.id)}
                               className="text-success hover:text-success"
                             >
                               <Check className="h-4 w-4" />
@@ -319,7 +385,7 @@ export default function DebitNoteApproval() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleReject(debitNote.id)}
+                              onClick={() => handleRejectClick(debitNote.id)}
                               className="text-destructive hover:text-destructive"
                             >
                               <X className="h-4 w-4" />
@@ -352,6 +418,36 @@ export default function DebitNoteApproval() {
               onClose={handleFormClose}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showRemarksDialog} onOpenChange={setShowRemarksDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {remarksAction === 'approve' ? 'Approve' : 'Reject'} Debit Note
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="remarks">Remarks *</Label>
+              <Textarea
+                id="remarks"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Enter approval/rejection remarks..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRemarksDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRemarksSubmit}>
+              Submit
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -145,6 +145,8 @@ export interface DebitNoteDetail {
   debitNoteId: string;
   expenseDetailId: string;
   categoryId: string;
+  subVendor?: string;
+  invoiceNo?: string;
   description: string;
   amount: number;
   expenseDetail?: ExpenseDetail;
