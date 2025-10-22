@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, Plus, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Vendor, VendorCOA, FormMode } from '@/types';
 import VendorCOAMappingDialog from './VendorCOAMappingDialog';
+import VendorCOAForm from './VendorCOAForm';
 
 interface VendorFormProps {
   mode: FormMode;
@@ -34,10 +35,10 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
     { id: '2', vendorId: vendor?.id || '', vendorCoaCode: 'VEN002', vendorCoaName: 'Supplies', description: 'Material supplies', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
   ]);
 
-  const [showCoaForm, setShowCoaForm] = useState(false);
+  const [showCoaDialog, setShowCoaDialog] = useState(false);
+  const [coaFormMode, setCoaFormMode] = useState<FormMode>('create');
   const [editingCoa, setEditingCoa] = useState<VendorCOA | null>(null);
   const [selectedCoaForMapping, setSelectedCoaForMapping] = useState<VendorCOA | null>(null);
-  const [coaFormData, setCoaFormData] = useState({ vendorCoaCode: '', vendorCoaName: '', description: '' });
 
   const isReadonly = mode === 'view';
   const title = mode === 'create' ? 'Add New Vendor' : mode === 'edit' ? 'Edit Vendor' : 'Vendor Details';
@@ -54,36 +55,37 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
   };
 
   const handleAddCoa = () => {
+    setCoaFormMode('create');
     setEditingCoa(null);
-    setCoaFormData({ vendorCoaCode: '', vendorCoaName: '', description: '' });
-    setShowCoaForm(true);
+    setShowCoaDialog(true);
   };
 
-  const handleEditCoa = (coa: VendorCOA) => {
+  const handleEditCoa = (coa: VendorCOA, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCoaFormMode('edit');
     setEditingCoa(coa);
-    setCoaFormData({ vendorCoaCode: coa.vendorCoaCode, vendorCoaName: coa.vendorCoaName, description: coa.description });
-    setShowCoaForm(true);
+    setShowCoaDialog(true);
   };
 
-  const handleDeleteCoa = (id: string) => {
+  const handleDeleteCoa = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setCoaList(coaList.filter(c => c.id !== id));
   };
 
-  const handleSaveCoa = () => {
-    if (editingCoa) {
-      setCoaList(coaList.map(c => c.id === editingCoa.id ? { ...c, ...coaFormData } : c));
-    } else {
+  const handleSaveCoa = (coa: VendorCOA) => {
+    if (coaFormMode === 'create') {
       const newCoa: VendorCOA = {
+        ...coa,
         id: Date.now().toString(),
         vendorId: vendor?.id || '',
-        ...coaFormData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       setCoaList([...coaList, newCoa]);
+    } else {
+      setCoaList(coaList.map(c => c.id === coa.id ? { ...coa, updatedAt: new Date().toISOString() } : c));
     }
-    setShowCoaForm(false);
-    setCoaFormData({ vendorCoaCode: '', vendorCoaName: '', description: '' });
+    setShowCoaDialog(false);
   };
 
   return (
@@ -215,62 +217,27 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
         </CardContent>
       </Card>
 
+      {/* Master COA Vendor Button */}
+      {!isReadonly && (
+        <div className="flex justify-end">
+          <Button 
+            type="button" 
+            onClick={handleAddCoa}
+            variant="outline"
+            className="gap-2"
+          >
+            <FolderOpen className="h-4 w-4" />
+            Master COA Vendor
+          </Button>
+        </div>
+      )}
+
       {/* COA Detail Table */}
       <Card className="border-border">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-foreground">COA Vendor</CardTitle>
-          {!isReadonly && (
-            <Button onClick={handleAddCoa} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add COA
-            </Button>
-          )}
+          <CardTitle className="text-foreground">COA Vendor Detail</CardTitle>
         </CardHeader>
         <CardContent>
-          {showCoaForm && (
-            <Card className="mb-4 border-accent">
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Vendor COA Code *</Label>
-                      <Input
-                        value={coaFormData.vendorCoaCode}
-                        onChange={(e) => setCoaFormData({...coaFormData, vendorCoaCode: e.target.value})}
-                        placeholder="e.g., VEN001"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Vendor COA Name *</Label>
-                      <Input
-                        value={coaFormData.vendorCoaName}
-                        onChange={(e) => setCoaFormData({...coaFormData, vendorCoaName: e.target.value})}
-                        placeholder="e.g., Services"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      value={coaFormData.description}
-                      onChange={(e) => setCoaFormData({...coaFormData, description: e.target.value})}
-                      placeholder="Description"
-                      rows={2}
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setShowCoaForm(false)} size="sm">
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveCoa} size="sm">
-                      Save COA
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           <Table>
             <TableHeader>
               <TableRow>
@@ -292,11 +259,11 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
                   <TableCell>{coa.description}</TableCell>
                   {!isReadonly && (
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditCoa(coa)}>
+                      <div className="flex justify-end space-x-2">
+                        <Button variant="ghost" size="sm" onClick={(e) => handleEditCoa(coa, e)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteCoa(coa.id)}>
+                        <Button variant="ghost" size="sm" onClick={(e) => handleDeleteCoa(coa.id, e)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -315,6 +282,15 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
           </Table>
         </CardContent>
       </Card>
+
+      {/* COA Form Dialog */}
+      <VendorCOAForm
+        mode={coaFormMode}
+        vendorCOA={editingCoa}
+        open={showCoaDialog}
+        onClose={() => setShowCoaDialog(false)}
+        onSave={handleSaveCoa}
+      />
 
       {/* COA Mapping Dialog */}
       {selectedCoaForMapping && (

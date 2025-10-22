@@ -38,9 +38,9 @@ const navigation = [
     name: 'Master Data',
     icon: FileText,
     children: [
+      { name: 'Vendors', href: '/vendors', icon: Users },
       { name: 'Companies', href: '/companies', icon: Building2 },
       { name: 'Vessels', href: '/vessels', icon: Ship },
-      { name: 'Vendors', href: '/vendors', icon: Users },
       { name: 'Chart of Accounts', href: '/accounts', icon: FileText },
     ],
   },
