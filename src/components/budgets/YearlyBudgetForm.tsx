@@ -256,7 +256,7 @@ export default function YearlyBudgetForm({ mode, budget, onSave, onClose }: Year
         <Card className="border-border">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-foreground">Budget Allocation by Category</CardTitle>
+              <CardTitle className="text-foreground">Budget Allocation</CardTitle>
               {!isReadonly && (
                 <Button type="button" onClick={addBudgetDetail} size="sm" className="bg-primary hover:bg-primary-dark">
                   <Plus className="h-4 w-4 mr-2" />
