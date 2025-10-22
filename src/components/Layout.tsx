@@ -41,13 +41,13 @@ const navigation = [
       { name: 'Vendors', href: '/vendors', icon: Users },
       { name: 'Companies', href: '/companies', icon: Building2 },
       { name: 'Vessels', href: '/vessels', icon: Ship },
-      { name: 'Chart of Accounts', href: '/accounts', icon: FileText },
     ],
   },
   {
     name: 'Transactions',
     icon: DollarSign,
     children: [
+      { name: 'Yearly Budget', href: '/yearly-budgets', icon: DollarSign },
       { name: 'Monthly Budget', href: '/budgets', icon: DollarSign },
       { name: 'Budget Realization', href: '/expenses', icon: FileText },
       { name: 'Debit Notes', href: '/debitnotes', icon: Users },

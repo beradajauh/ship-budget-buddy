@@ -96,12 +96,43 @@ export interface ChartOfAccount {
   updatedAt: string;
 }
 
-export interface BudgetHeader {
+export interface YearlyBudgetHeader {
   id: string;
   companyId: string;
   vesselId: string;
-  period: string; // YYYY-MM or YYYY format (monthly or yearly)
-  budgetType: 'Monthly' | 'Yearly';
+  year: string; // YYYY format
+  currency: string;
+  totalBudget: number;
+  usedBudget: number; // Sum of all monthly budgets
+  remainingBudget: number; // totalBudget - usedBudget
+  status: 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'Closed';
+  createdBy: string;
+  createdDate: string;
+  approvedBy?: string;
+  approvedDate?: string;
+  company?: Company;
+  vessel?: Vessel;
+  yearlyBudgetDetails?: YearlyBudgetDetail[];
+}
+
+export interface YearlyBudgetDetail {
+  id: string;
+  yearlyBudgetId: string;
+  coaId: string;
+  budgetAmount: number;
+  usedAmount: number; // Sum from monthly budgets
+  remainingAmount: number; // budgetAmount - usedAmount
+  notes?: string;
+  coa?: ChartOfAccount;
+}
+
+export interface BudgetHeader {
+  id: string;
+  yearlyBudgetId?: string; // Reference to yearly budget
+  companyId: string;
+  vesselId: string;
+  period: string; // YYYY-MM format
+  budgetType: 'Monthly';
   currency: string;
   totalBudget: number;
   status: 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'Closed';
@@ -111,6 +142,7 @@ export interface BudgetHeader {
   approvedDate?: string;
   company?: Company;
   vessel?: Vessel;
+  yearlyBudget?: YearlyBudgetHeader;
   budgetDetails?: BudgetDetail[];
 }
 

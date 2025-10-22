@@ -10,6 +10,7 @@ import CompanyList from "./components/companies/CompanyList";
 import VesselList from "./components/vessels/VesselList";
 import VendorList from "./components/vendors/VendorList";
 import AccountList from "./components/accounts/AccountList";
+import YearlyBudgetList from "./components/budgets/YearlyBudgetList";
 import BudgetList from "./components/budgets/BudgetList";
 import ExpenseList from "./components/expenses/ExpenseList";
 import DebitNoteList from "./components/debitnotes/DebitNoteList";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="vessels" element={<VesselList />} />
             <Route path="vendors" element={<VendorList />} />
             <Route path="accounts" element={<AccountList />} />
+            <Route path="yearly-budgets" element={<YearlyBudgetList />} />
             <Route path="budgets" element={<BudgetList />} />
             <Route path="expenses" element={<ExpenseList />} />
             <Route path="debitnotes" element={<DebitNoteList />} />

@@ -12,6 +12,7 @@ import BudgetForm from './BudgetForm';
 const mockBudgets: BudgetHeader[] = [
   {
     id: '1',
+    yearlyBudgetId: 'yb1',
     companyId: '1',
     vesselId: '1',
     period: '2024-03',
@@ -25,9 +26,11 @@ const mockBudgets: BudgetHeader[] = [
     approvedDate: '2024-02-28',
     company: { id: '1', companyName: 'PT Pelayaran Nusantara' } as any,
     vessel: { id: '1', vesselName: 'MV Sinar Harapan', vesselCode: 'MV001' } as any,
+    yearlyBudget: { id: 'yb1', year: '2024', totalBudget: 1500000, usedBudget: 375000, remainingBudget: 1125000 } as any,
   },
   {
     id: '2',
+    yearlyBudgetId: 'yb2',
     companyId: '2',
     vesselId: '2',
     period: '2024-03',
@@ -39,9 +42,11 @@ const mockBudgets: BudgetHeader[] = [
     createdDate: '2024-02-20',
     company: { id: '2', companyName: 'PT Samudera Jaya' } as any,
     vessel: { id: '2', vesselName: 'TB Nusantara', vesselCode: 'TB002' } as any,
+    yearlyBudget: { id: 'yb2', year: '2024', totalBudget: 1020000, usedBudget: 170000, remainingBudget: 850000 } as any,
   },
   {
     id: '3',
+    yearlyBudgetId: 'yb1',
     companyId: '1',
     vesselId: '1',
     period: '2024-04',
@@ -53,6 +58,7 @@ const mockBudgets: BudgetHeader[] = [
     createdDate: '2024-03-15',
     company: { id: '1', companyName: 'PT Pelayaran Nusantara' } as any,
     vessel: { id: '1', vesselName: 'MV Sinar Harapan', vesselCode: 'MV001' } as any,
+    yearlyBudget: { id: 'yb1', year: '2024', totalBudget: 1500000, usedBudget: 375000, remainingBudget: 1125000 } as any,
   },
 ];
 
@@ -142,12 +148,12 @@ export default function BudgetList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Budget Management</h2>
-          <p className="text-muted-foreground">Manage monthly vessel budgets</p>
+          <h2 className="text-2xl font-bold text-foreground">Monthly Budget Management</h2>
+          <p className="text-muted-foreground">Manage monthly vessel budgets linked to yearly allocations</p>
         </div>
         <Button onClick={handleCreate} className="bg-primary hover:bg-primary-dark">
           <Plus className="h-4 w-4 mr-2" />
-          Create Budget
+          Create Monthly Budget
         </Button>
       </div>
 
@@ -167,7 +173,7 @@ export default function BudgetList() {
       {/* Budgets table */}
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Budget List</CardTitle>
+          <CardTitle className="text-foreground">Monthly Budget List</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

@@ -6,16 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BudgetHeader, BudgetDetail, FormMode } from '@/types';
+import { YearlyBudgetHeader, YearlyBudgetDetail, FormMode } from '@/types';
 
-interface BudgetFormProps {
+interface YearlyBudgetFormProps {
   mode: FormMode;
-  budget?: BudgetHeader | null;
-  onSave: (budget: Partial<BudgetHeader>) => void;
+  budget?: YearlyBudgetHeader | null;
+  onSave: (budget: Partial<YearlyBudgetHeader>) => void;
   onClose: () => void;
 }
 
-// Mock data for dropdowns
 const mockCompanies = [
   { id: '1', name: 'PT Pelayaran Nusantara', currency: 'USD' },
   { id: '2', name: 'PT Samudera Jaya', currency: 'IDR' },
@@ -24,11 +23,6 @@ const mockCompanies = [
 const mockVessels = [
   { id: '1', name: 'MV Sinar Harapan', code: 'MV001', companyId: '1' },
   { id: '2', name: 'TB Nusantara', code: 'TB002', companyId: '2' },
-];
-
-const mockYearlyBudgets = [
-  { id: 'yb1', year: '2024', companyId: '1', vesselId: '1', totalBudget: 1500000, usedBudget: 375000, remainingBudget: 1125000 },
-  { id: 'yb2', year: '2024', companyId: '2', vesselId: '2', totalBudget: 1020000, usedBudget: 170000, remainingBudget: 850000 },
 ];
 
 const mockCategories = [
@@ -40,38 +34,39 @@ const mockCategories = [
   { id: '4', name: 'Insurance', code: 'INS' },
 ];
 
-export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetFormProps) {
+export default function YearlyBudgetForm({ mode, budget, onSave, onClose }: YearlyBudgetFormProps) {
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear + i);
+
   const [formData, setFormData] = useState({
-    yearlyBudgetId: budget?.yearlyBudgetId || '',
     companyId: budget?.companyId || '',
     vesselId: budget?.vesselId || '',
-    period: budget?.period || '',
+    year: budget?.year || currentYear.toString(),
     currency: budget?.currency || 'USD',
     status: budget?.status || 'Draft',
   });
 
-  const [budgetDetails, setBudgetDetails] = useState<BudgetDetail[]>(
-    budget?.budgetDetails || []
+  const [budgetDetails, setBudgetDetails] = useState<YearlyBudgetDetail[]>(
+    budget?.yearlyBudgetDetails || []
   );
 
   const isReadonly = mode === 'view';
-  const title = mode === 'create' ? 'Create Monthly Budget' : mode === 'edit' ? 'Edit Monthly Budget' : 'Monthly Budget Details';
+  const title = mode === 'create' ? 'Create Yearly Budget' : mode === 'edit' ? 'Edit Yearly Budget' : 'Yearly Budget Details';
 
-  const selectedCompany = mockCompanies.find(c => c.id === formData.companyId);
   const availableVessels = mockVessels.filter(v => v.companyId === formData.companyId);
-  
-  // Get available yearly budgets based on selected company and vessel
-  const availableYearlyBudgets = mockYearlyBudgets.filter(
-    yb => yb.companyId === formData.companyId && yb.vesselId === formData.vesselId
-  );
-  
-  const selectedYearlyBudget = mockYearlyBudgets.find(yb => yb.id === formData.yearlyBudgetId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (mode !== 'view') {
       const totalBudget = budgetDetails.reduce((sum, detail) => sum + detail.budgetAmount, 0);
-      onSave({ ...formData, totalBudget, budgetDetails });
+      const usedBudget = budgetDetails.reduce((sum, detail) => sum + detail.usedAmount, 0);
+      onSave({ 
+        ...formData, 
+        totalBudget, 
+        usedBudget,
+        remainingBudget: totalBudget - usedBudget,
+        yearlyBudgetDetails: budgetDetails 
+      });
     }
   };
 
@@ -79,13 +74,11 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
-      // Auto-set currency when company changes
       if (field === 'companyId') {
         const company = mockCompanies.find(c => c.id === value);
         if (company) {
           newData.currency = company.currency;
         }
-        // Reset vessel when company changes
         newData.vesselId = '';
       }
       
@@ -94,19 +87,28 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
   };
 
   const addBudgetDetail = () => {
-    const newDetail: BudgetDetail = {
+    const newDetail: YearlyBudgetDetail = {
       id: Date.now().toString(),
-      budgetId: budget?.id || '',
+      yearlyBudgetId: budget?.id || '',
       coaId: '',
       budgetAmount: 0,
+      usedAmount: 0,
+      remainingAmount: 0,
       notes: '',
     };
     setBudgetDetails([...budgetDetails, newDetail]);
   };
 
-  const updateBudgetDetail = (index: number, field: keyof BudgetDetail, value: string | number) => {
+  const updateBudgetDetail = (index: number, field: keyof YearlyBudgetDetail, value: string | number) => {
     const updated = [...budgetDetails];
     updated[index] = { ...updated[index], [field]: value };
+    
+    if (field === 'budgetAmount' || field === 'usedAmount') {
+      const budgetAmount = field === 'budgetAmount' ? Number(value) : updated[index].budgetAmount;
+      const usedAmount = field === 'usedAmount' ? Number(value) : updated[index].usedAmount;
+      updated[index].remainingAmount = budgetAmount - usedAmount;
+    }
+    
     setBudgetDetails(updated);
   };
 
@@ -115,6 +117,8 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
   };
 
   const totalBudget = budgetDetails.reduce((sum, detail) => sum + detail.budgetAmount, 0);
+  const totalUsed = budgetDetails.reduce((sum, detail) => sum + detail.usedAmount, 0);
+  const totalRemaining = totalBudget - totalUsed;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -134,21 +138,20 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
         <div>
           <h2 className="text-2xl font-bold text-foreground">{title}</h2>
           <p className="text-muted-foreground">
-            {mode === 'create' ? 'Set up a new monthly budget linked to yearly budget' : 
-             mode === 'edit' ? 'Update monthly budget information and allocations' : 
-             'View monthly budget details and allocations'}
+            {mode === 'create' ? 'Set up a new yearly budget for a vessel' : 
+             mode === 'edit' ? 'Update yearly budget information and allocations' : 
+             'View yearly budget details and monthly utilization'}
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Budget Header */}
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-foreground">Budget Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="companyId">Company *</Label>
                 <Select 
@@ -190,44 +193,28 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="yearlyBudgetId">Yearly Budget Reference</Label>
-                <Select 
-                  value={formData.yearlyBudgetId} 
-                  onValueChange={(value) => handleChange('yearlyBudgetId', value)}
-                  disabled={isReadonly || !formData.vesselId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select yearly budget" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableYearlyBudgets.map((yb) => (
-                      <SelectItem key={yb.id} value={yb.id}>
-                        {yb.year} - {formatCurrency(yb.remainingBudget)} available
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedYearlyBudget && (
-                  <p className="text-xs text-muted-foreground">
-                    Available: {formatCurrency(selectedYearlyBudget.remainingBudget)} of {formatCurrency(selectedYearlyBudget.totalBudget)}
-                  </p>
-                )}
-              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="period">Period (YYYY-MM) *</Label>
-                <Input
-                  id="period"
-                  type="month"
-                  value={formData.period}
-                  onChange={(e) => handleChange('period', e.target.value)}
+                <Label htmlFor="year">Year *</Label>
+                <Select 
+                  value={formData.year} 
+                  onValueChange={(value) => handleChange('year', value)}
+                  disabled={isReadonly}
                   required
-                  readOnly={isReadonly}
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -239,7 +226,7 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
                   className="bg-muted"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Auto-set based on selected company
+                  Auto-set based on company
                 </p>
               </div>
 
@@ -266,15 +253,14 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
           </CardContent>
         </Card>
 
-        {/* Budget Details */}
         <Card className="border-border">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-foreground">Budget Allocation</CardTitle>
+              <CardTitle className="text-foreground">Budget Allocation by Category</CardTitle>
               {!isReadonly && (
                 <Button type="button" onClick={addBudgetDetail} size="sm" className="bg-primary hover:bg-primary-dark">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Item
+                  Add Category
                 </Button>
               )}
             </div>
@@ -284,7 +270,9 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
               <TableHeader>
                 <TableRow>
                   <TableHead>COA</TableHead>
-                  <TableHead>Budget Amount</TableHead>
+                  <TableHead>Yearly Budget</TableHead>
+                  <TableHead>Used (Monthly)</TableHead>
+                  <TableHead>Remaining</TableHead>
                   <TableHead>Notes</TableHead>
                   {!isReadonly && <TableHead className="w-16">Action</TableHead>}
                 </TableRow>
@@ -321,6 +309,22 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
                     </TableCell>
                     <TableCell>
                       <Input
+                        type="number"
+                        value={detail.usedAmount}
+                        readOnly
+                        className="bg-muted text-warning"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={detail.remainingAmount}
+                        readOnly
+                        className="bg-muted font-semibold text-success"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
                         value={detail.notes || ''}
                         onChange={(e) => updateBudgetDetail(index, 'notes', e.target.value)}
                         placeholder="Optional notes"
@@ -344,8 +348,8 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
                 ))}
                 {budgetDetails.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={isReadonly ? 3 : 4} className="text-center text-muted-foreground py-8">
-                      No budget items added yet. Click "Add Item" to start.
+                    <TableCell colSpan={isReadonly ? 5 : 6} className="text-center text-muted-foreground py-8">
+                      No budget categories added yet. Click "Add Category" to start.
                     </TableCell>
                   </TableRow>
                 )}
@@ -353,11 +357,23 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
             </Table>
 
             {budgetDetails.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-border">
+              <div className="mt-4 pt-4 border-t border-border space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-foreground">Total Budget:</span>
-                  <span className="text-xl font-bold text-primary">
+                  <span className="text-base font-medium text-foreground">Total Yearly Budget:</span>
+                  <span className="text-lg font-bold text-primary">
                     {formatCurrency(totalBudget)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-base font-medium text-foreground">Total Used:</span>
+                  <span className="text-lg font-semibold text-warning">
+                    {formatCurrency(totalUsed)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-border">
+                  <span className="text-lg font-semibold text-foreground">Remaining Budget:</span>
+                  <span className="text-xl font-bold text-success">
+                    {formatCurrency(totalRemaining)}
                   </span>
                 </div>
               </div>
@@ -372,7 +388,7 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
             </Button>
             <Button type="submit" className="bg-primary hover:bg-primary-dark">
               <Save className="h-4 w-4 mr-2" />
-              {mode === 'create' ? 'Create Monthly Budget' : 'Update Monthly Budget'}
+              {mode === 'create' ? 'Create Yearly Budget' : 'Update Yearly Budget'}
             </Button>
           </div>
         )}
