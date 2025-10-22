@@ -112,18 +112,6 @@ export interface YearlyBudgetHeader {
   approvedDate?: string;
   company?: Company;
   vessel?: Vessel;
-  yearlyBudgetDetails?: YearlyBudgetDetail[];
-}
-
-export interface YearlyBudgetDetail {
-  id: string;
-  yearlyBudgetId: string;
-  coaId: string;
-  budgetAmount: number;
-  usedAmount: number; // Sum from monthly budgets
-  remainingAmount: number; // budgetAmount - usedAmount
-  notes?: string;
-  coa?: ChartOfAccount;
 }
 
 export interface BudgetHeader {
