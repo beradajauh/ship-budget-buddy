@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, Plus, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Company, CompanyCOA, FormMode } from '@/types';
-import COAMappingDialog from './COAMappingDialog';
+import { Company, FormMode } from '@/types';
 
 interface CompanyFormProps {
   mode: FormMode;
@@ -27,17 +25,6 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
     status: company?.status || 'Active',
   });
 
-  // Mock COA data
-  const [coaList, setCoaList] = useState<CompanyCOA[]>([
-    { id: '1', companyId: company?.id || '', coaCode: 'COA001', coaName: 'Operating Expenses', description: 'Day to day operational costs', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: '2', companyId: company?.id || '', coaCode: 'COA002', coaName: 'Maintenance & Repairs', description: 'Vessel maintenance costs', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  ]);
-
-  const [showCoaForm, setShowCoaForm] = useState(false);
-  const [editingCoa, setEditingCoa] = useState<CompanyCOA | null>(null);
-  const [selectedCoaForMapping, setSelectedCoaForMapping] = useState<CompanyCOA | null>(null);
-  const [coaFormData, setCoaFormData] = useState({ coaCode: '', coaName: '', description: '' });
-
   const isReadonly = mode === 'view';
   const title = mode === 'create' ? 'Add New Company' : mode === 'edit' ? 'Edit Company' : 'Company Details';
 
@@ -50,39 +37,6 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddCoa = () => {
-    setEditingCoa(null);
-    setCoaFormData({ coaCode: '', coaName: '', description: '' });
-    setShowCoaForm(true);
-  };
-
-  const handleEditCoa = (coa: CompanyCOA) => {
-    setEditingCoa(coa);
-    setCoaFormData({ coaCode: coa.coaCode, coaName: coa.coaName, description: coa.description });
-    setShowCoaForm(true);
-  };
-
-  const handleDeleteCoa = (id: string) => {
-    setCoaList(coaList.filter(c => c.id !== id));
-  };
-
-  const handleSaveCoa = () => {
-    if (editingCoa) {
-      setCoaList(coaList.map(c => c.id === editingCoa.id ? { ...c, ...coaFormData } : c));
-    } else {
-      const newCoa: CompanyCOA = {
-        id: Date.now().toString(),
-        companyId: company?.id || '',
-        ...coaFormData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setCoaList([...coaList, newCoa]);
-    }
-    setShowCoaForm(false);
-    setCoaFormData({ coaCode: '', coaName: '', description: '' });
   };
 
   return (
@@ -202,117 +156,6 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
           </form>
         </CardContent>
       </Card>
-
-      {/* COA Detail Table */}
-      <Card className="border-border">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-foreground">COA Perusahaan</CardTitle>
-          {!isReadonly && (
-            <Button onClick={handleAddCoa} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add COA
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {showCoaForm && (
-            <Card className="mb-4 border-accent">
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>COA Code *</Label>
-                      <Input
-                        value={coaFormData.coaCode}
-                        onChange={(e) => setCoaFormData({...coaFormData, coaCode: e.target.value})}
-                        placeholder="e.g., COA001"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>COA Name *</Label>
-                      <Input
-                        value={coaFormData.coaName}
-                        onChange={(e) => setCoaFormData({...coaFormData, coaName: e.target.value})}
-                        placeholder="e.g., Operating Expenses"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      value={coaFormData.description}
-                      onChange={(e) => setCoaFormData({...coaFormData, description: e.target.value})}
-                      placeholder="Description"
-                      rows={2}
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setShowCoaForm(false)} size="sm">
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveCoa} size="sm">
-                      Save COA
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>COA Code</TableHead>
-                <TableHead>COA Name</TableHead>
-                <TableHead>Description</TableHead>
-                {!isReadonly && <TableHead className="text-right">Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {coaList.map((coa) => (
-                <TableRow 
-                  key={coa.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedCoaForMapping(coa)}
-                >
-                  <TableCell className="font-medium">{coa.coaCode}</TableCell>
-                  <TableCell>{coa.coaName}</TableCell>
-                  <TableCell>{coa.description}</TableCell>
-                  {!isReadonly && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditCoa(coa)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteCoa(coa.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {coaList.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={isReadonly ? 3 : 4} className="text-center text-muted-foreground">
-                    No COA records found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* COA Mapping Dialog */}
-      {selectedCoaForMapping && (
-        <COAMappingDialog
-          companyCoa={selectedCoaForMapping}
-          companyId={company?.id || ''}
-          onClose={() => setSelectedCoaForMapping(null)}
-          readonly={isReadonly}
-        />
-      )}
     </div>
   );
 }

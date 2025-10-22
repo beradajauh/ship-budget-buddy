@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Building2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Building2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Company, FormMode } from '@/types';
 import CompanyForm from './CompanyForm';
+import CompanyCOAManagementDialog from './CompanyCOAManagementDialog';
 
 // Mock data
 const mockCompanies: Company[] = [
@@ -40,6 +41,8 @@ export default function CompanyList() {
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showCoaManagement, setShowCoaManagement] = useState(false);
+  const [selectedCompanyForCoa, setSelectedCompanyForCoa] = useState<Company | null>(null);
 
   const filteredCompanies = companies.filter(company =>
     company.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,6 +70,11 @@ export default function CompanyList() {
   const handleFormClose = () => {
     setShowForm(false);
     setSelectedCompany(null);
+  };
+
+  const handleManageCoa = (company: Company) => {
+    setSelectedCompanyForCoa(company);
+    setShowCoaManagement(true);
   };
 
   if (showForm) {
@@ -148,6 +156,14 @@ export default function CompanyList() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleManageCoa(company)}
+                        title="Master COA Company"
+                      >
+                        <FolderOpen className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleView(company)}>
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -175,6 +191,19 @@ export default function CompanyList() {
           )}
         </CardContent>
       </Card>
+
+      {/* COA Management Dialog */}
+      {showCoaManagement && selectedCompanyForCoa && (
+        <CompanyCOAManagementDialog
+          companyId={selectedCompanyForCoa.id}
+          companyName={selectedCompanyForCoa.companyName}
+          open={showCoaManagement}
+          onClose={() => {
+            setShowCoaManagement(false);
+            setSelectedCompanyForCoa(null);
+          }}
+        />
+      )}
     </div>
   );
 }
