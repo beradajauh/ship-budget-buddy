@@ -24,8 +24,8 @@ const mockCompanies: Company[] = [
     companyCode: 'SHIP001',
     companyName: 'Ocean Shipping Ltd',
     address: 'Jakarta',
-    contactPerson: 'John Doe',
-    currency: 'USD',
+    phone: '+62 21 1234567',
+    email: 'contact@oceanshipping.com',
     status: 'Active',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
@@ -53,8 +53,8 @@ const mockVendors: Vendor[] = [
     vendorCode: 'V001',
     vendorName: 'Marine Services Co',
     address: 'Surabaya',
-    contactPerson: 'Jane Smith',
-    bankAccountInfo: 'BCA 123456789',
+    phone: '+62 31 1234567',
+    email: 'contact@marine.com',
     taxId: 'TAX001',
     status: 'Active',
     createdAt: '2024-01-01T00:00:00Z',
@@ -221,10 +221,9 @@ export default function DebitNoteForm({ mode, debitNote, onSave, onClose }: Debi
   };
 
   const formatCurrency = (amount: number) => {
-    const currency = mockCompanies.find(c => c.id === formData.companyId)?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
+      currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);

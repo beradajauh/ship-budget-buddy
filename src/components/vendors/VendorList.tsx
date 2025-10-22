@@ -15,8 +15,8 @@ const mockVendors: Vendor[] = [
     vendorCode: 'VD001',
     vendorName: 'PT Marina Services',
     address: 'Jl. Pelabuhan No. 789, Surabaya',
-    contactPerson: 'Captain John Doe',
-    bankAccountInfo: 'BCA 1234567890',
+    phone: '+62 31 1234567',
+    email: 'contact@marina.com',
     taxId: 'NPWP-001-234-567',
     status: 'Active',
     createdAt: '2024-01-15',
@@ -27,8 +27,8 @@ const mockVendors: Vendor[] = [
     vendorCode: 'VD002',
     vendorName: 'PT Ocean Management',
     address: 'Jl. Bahari No. 321, Jakarta',
-    contactPerson: 'Captain Jane Smith',
-    bankAccountInfo: 'Mandiri 0987654321',
+    phone: '+62 21 7777777',
+    email: 'info@ocean.com',
     taxId: 'NPWP-002-345-678',
     status: 'Active',
     createdAt: '2024-01-10',
@@ -122,8 +122,8 @@ export default function VendorList() {
               <TableRow>
                 <TableHead>Vendor Code</TableHead>
                 <TableHead>Vendor Name</TableHead>
-                <TableHead>Contact Person</TableHead>
-                <TableHead>Bank Info</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Tax ID</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -139,8 +139,8 @@ export default function VendorList() {
                       <div className="text-sm text-muted-foreground">{vendor.address}</div>
                     </div>
                   </TableCell>
-                  <TableCell>{vendor.contactPerson}</TableCell>
-                  <TableCell>{vendor.bankAccountInfo}</TableCell>
+                  <TableCell>{vendor.phone}</TableCell>
+                  <TableCell>{vendor.email}</TableCell>
                   <TableCell>{vendor.taxId}</TableCell>
                   <TableCell>
                     <Badge 

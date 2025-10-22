@@ -30,8 +30,8 @@ const mockDebitNotesForApproval: DebitNoteHeader[] = [
       companyCode: 'SHIP001',
       companyName: 'Ocean Shipping Ltd',
       address: 'Jakarta',
-      contactPerson: 'John Doe',
-      currency: 'USD',
+      phone: '+62 21 1234567',
+      email: 'contact@oceanshipping.com',
       status: 'Active',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z'
@@ -52,8 +52,8 @@ const mockDebitNotesForApproval: DebitNoteHeader[] = [
       vendorCode: 'V001',
       vendorName: 'Marine Services Co',
       address: 'Surabaya',
-      contactPerson: 'Jane Smith',
-      bankAccountInfo: 'BCA 123456789',
+      phone: '+62 31 1234567',
+      email: 'contact@marine.com',
       taxId: 'TAX001',
       status: 'Active',
       createdAt: '2024-01-01T00:00:00Z',
@@ -78,8 +78,8 @@ const mockDebitNotesForApproval: DebitNoteHeader[] = [
       companyCode: 'SHIP001',
       companyName: 'Ocean Shipping Ltd',
       address: 'Jakarta',
-      contactPerson: 'John Doe',
-      currency: 'USD',
+      phone: '+62 21 1234567',
+      email: 'contact@oceanshipping.com',
       status: 'Active',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z'
@@ -100,8 +100,8 @@ const mockDebitNotesForApproval: DebitNoteHeader[] = [
       vendorCode: 'V001',
       vendorName: 'Marine Services Co',
       address: 'Surabaya',
-      contactPerson: 'Jane Smith',
-      bankAccountInfo: 'BCA 123456789',
+      phone: '+62 31 1234567',
+      email: 'contact@marine.com',
       taxId: 'TAX001',
       status: 'Active',
       createdAt: '2024-01-01T00:00:00Z',
@@ -126,8 +126,8 @@ const mockDebitNotesForApproval: DebitNoteHeader[] = [
       companyCode: 'SHIP001',
       companyName: 'Ocean Shipping Ltd',
       address: 'Jakarta',
-      contactPerson: 'John Doe',
-      currency: 'USD',
+      phone: '+62 21 1234567',
+      email: 'contact@oceanshipping.com',
       status: 'Active',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z'
@@ -148,8 +148,8 @@ const mockDebitNotesForApproval: DebitNoteHeader[] = [
       vendorCode: 'V002',
       vendorName: 'Shipping Supplies Inc',
       address: 'Singapore',
-      contactPerson: 'Michael Chen',
-      bankAccountInfo: 'DBS 987654321',
+      phone: '+65 1234567',
+      email: 'contact@shipping.com',
       taxId: 'TAX002',
       status: 'Active',
       createdAt: '2024-01-01T00:00:00Z',
@@ -357,7 +357,7 @@ export default function DebitNoteApproval() {
                     </TableCell>
                     <TableCell>{debitNote.vessel?.vesselName}</TableCell>
                     <TableCell>{debitNote.vendor?.vendorName}</TableCell>
-                    <TableCell>{formatCurrency(debitNote.totalAmount, debitNote.company?.currency)}</TableCell>
+                    <TableCell>{formatCurrency(debitNote.totalAmount, 'USD')}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(debitNote.status)}>
                         {debitNote.status}

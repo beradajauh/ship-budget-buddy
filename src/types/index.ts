@@ -3,9 +3,19 @@ export interface Company {
   companyCode: string;
   companyName: string;
   address: string;
-  contactPerson: string;
-  currency: string;
+  phone: string;
+  email: string;
   status: 'Active' | 'Inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CompanyCOA {
+  id: string;
+  companyId: string;
+  coaCode: string;
+  coaName: string;
+  description: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -41,10 +51,33 @@ export interface Vendor {
   vendorCode: string;
   vendorName: string;
   address: string;
-  contactPerson: string;
-  bankAccountInfo: string;
+  phone: string;
+  email: string;
   taxId: string;
   status: 'Active' | 'Inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorCOA {
+  id: string;
+  vendorId: string;
+  vendorCoaCode: string;
+  vendorCoaName: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface COAMapping {
+  id: string;
+  companyCoaId: string;
+  vendorCoaId: string;
+  companyId: string;
+  vendorId: string;
+  relationshipType: 'Equivalent' | 'Mapping';
+  companyCOA?: CompanyCOA;
+  vendorCOA?: VendorCOA;
   createdAt: string;
   updatedAt: string;
 }

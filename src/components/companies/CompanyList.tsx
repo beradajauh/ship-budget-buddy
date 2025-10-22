@@ -15,8 +15,8 @@ const mockCompanies: Company[] = [
     companyCode: 'PT001',
     companyName: 'PT Pelayaran Nusantara',
     address: 'Jl. Sudirman No. 123, Jakarta',
-    contactPerson: 'Ahmad Susanto',
-    currency: 'USD',
+    phone: '+62 21 1234567',
+    email: 'contact@pelayaran.com',
     status: 'Active',
     createdAt: '2024-01-15',
     updatedAt: '2024-01-15',
@@ -26,8 +26,8 @@ const mockCompanies: Company[] = [
     companyCode: 'PT002',
     companyName: 'PT Samudera Jaya',
     address: 'Jl. Thamrin No. 456, Jakarta',
-    contactPerson: 'Siti Rahayu',
-    currency: 'IDR',
+    phone: '+62 21 7654321',
+    email: 'info@samudera.com',
     status: 'Active',
     createdAt: '2024-01-10',
     updatedAt: '2024-01-10',
@@ -120,8 +120,8 @@ export default function CompanyList() {
               <TableRow>
                 <TableHead>Company Code</TableHead>
                 <TableHead>Company Name</TableHead>
-                <TableHead>Contact Person</TableHead>
-                <TableHead>Currency</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -136,8 +136,8 @@ export default function CompanyList() {
                       <div className="text-sm text-muted-foreground">{company.address}</div>
                     </div>
                   </TableCell>
-                  <TableCell>{company.contactPerson}</TableCell>
-                  <TableCell>{company.currency}</TableCell>
+                  <TableCell>{company.phone}</TableCell>
+                  <TableCell>{company.email}</TableCell>
                   <TableCell>
                     <Badge 
                       variant={company.status === 'Active' ? 'default' : 'secondary'}
