@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Vendor, FormMode } from '@/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Vendor, VendorCOA, FormMode } from '@/types';
 
 interface VendorFormProps {
   mode: FormMode;
@@ -25,6 +26,28 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
     taxId: vendor?.taxId || '',
     status: vendor?.status || 'Active',
   });
+
+  // Mock COA data for view mode
+  const mockVendorCOAs: VendorCOA[] = [
+    {
+      id: '1',
+      vendorId: vendor?.id || '',
+      vendorCoaCode: 'VEN001',
+      vendorCoaName: 'Services',
+      description: 'Service charges',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      vendorId: vendor?.id || '',
+      vendorCoaCode: 'VEN002',
+      vendorCoaName: 'Supplies',
+      description: 'Material supplies',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
 
   const isReadonly = mode === 'view';
   const title = mode === 'create' ? 'Add New Vendor' : mode === 'edit' ? 'Edit Vendor' : 'Vendor Details';
@@ -169,6 +192,41 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
         </CardContent>
       </Card>
 
+      {/* COA List - Only show in view mode */}
+      {isReadonly && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">COA Vendor</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>COA Code</TableHead>
+                  <TableHead>COA Name</TableHead>
+                  <TableHead>Description</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mockVendorCOAs.map((coa) => (
+                  <TableRow key={coa.id}>
+                    <TableCell className="font-medium">{coa.vendorCoaCode}</TableCell>
+                    <TableCell>{coa.vendorCoaName}</TableCell>
+                    <TableCell className="text-muted-foreground">{coa.description}</TableCell>
+                  </TableRow>
+                ))}
+                {mockVendorCOAs.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      No COA records found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

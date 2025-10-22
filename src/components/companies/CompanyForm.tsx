@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Company, FormMode } from '@/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Company, CompanyCOA, COAMapping, FormMode } from '@/types';
 
 interface CompanyFormProps {
   mode: FormMode;
@@ -24,6 +26,89 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
     email: company?.email || '',
     status: company?.status || 'Active',
   });
+
+  // Mock data for view mode - Company COAs with their vendor mappings
+  const mockCompanyCOAsWithMappings: Array<CompanyCOA & { mappings: COAMapping[] }> = [
+    {
+      id: '1',
+      companyId: company?.id || '',
+      coaCode: 'COA001',
+      coaName: 'Operating Expenses',
+      description: 'Day to day operational costs',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      mappings: [
+        {
+          id: 'm1',
+          companyCoaId: '1',
+          vendorCoaId: 'v1',
+          companyId: company?.id || '',
+          vendorId: '1',
+          relationshipType: 'Equivalent',
+          vendorCOA: {
+            id: 'v1',
+            vendorId: '1',
+            vendorCoaCode: 'VEN001',
+            vendorCoaName: 'Services',
+            description: 'Service charges',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'm2',
+          companyCoaId: '1',
+          vendorCoaId: 'v2',
+          companyId: company?.id || '',
+          vendorId: '1',
+          relationshipType: 'Mapping',
+          vendorCOA: {
+            id: 'v2',
+            vendorId: '1',
+            vendorCoaCode: 'VEN002',
+            vendorCoaName: 'Supplies',
+            description: 'Material supplies',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+    },
+    {
+      id: '2',
+      companyId: company?.id || '',
+      coaCode: 'COA002',
+      coaName: 'Maintenance & Repairs',
+      description: 'Vessel maintenance costs',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      mappings: [
+        {
+          id: 'm3',
+          companyCoaId: '2',
+          vendorCoaId: 'v3',
+          companyId: company?.id || '',
+          vendorId: '2',
+          relationshipType: 'Equivalent',
+          vendorCOA: {
+            id: 'v3',
+            vendorId: '2',
+            vendorCoaCode: 'VEN003',
+            vendorCoaName: 'Materials',
+            description: 'Raw materials',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+    },
+  ];
 
   const isReadonly = mode === 'view';
   const title = mode === 'create' ? 'Add New Company' : mode === 'edit' ? 'Edit Company' : 'Company Details';
@@ -156,6 +241,81 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
           </form>
         </CardContent>
       </Card>
+
+      {/* COA List with Vendor Mappings - Only show in view mode */}
+      {isReadonly && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">COA Perusahaan & Persamaan COA Vendor</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {mockCompanyCOAsWithMappings.map((coa) => (
+              <div key={coa.id} className="space-y-3">
+                {/* Company COA Header */}
+                <div className="bg-muted/50 p-4 rounded-lg border border-border">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">COA Code</p>
+                      <p className="font-semibold text-foreground">{coa.coaCode}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">COA Name</p>
+                      <p className="font-semibold text-foreground">{coa.coaName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Description</p>
+                      <p className="text-foreground">{coa.description}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vendor COA Mappings */}
+                <div className="pl-4 border-l-2 border-primary/30">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Persamaan COA Vendor:</p>
+                  {coa.mappings.length > 0 ? (
+                    <div className="space-y-2">
+                      {coa.mappings.map((mapping) => (
+                        <div
+                          key={mapping.id}
+                          className="bg-background p-3 rounded border border-border flex items-center justify-between"
+                        >
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Vendor COA Code</p>
+                              <p className="font-medium text-sm">{mapping.vendorCOA?.vendorCoaCode}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Vendor COA Name</p>
+                              <p className="text-sm">{mapping.vendorCOA?.vendorCoaName}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Relationship</p>
+                              <Badge
+                                variant={mapping.relationshipType === 'Equivalent' ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {mapping.relationshipType}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No vendor mappings</p>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {mockCompanyCOAsWithMappings.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No COA records found
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
