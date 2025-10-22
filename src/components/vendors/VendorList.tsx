@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Users } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Users, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Vendor, FormMode } from '@/types';
 import VendorForm from './VendorForm';
+import VendorCOAManagementDialog from './VendorCOAManagementDialog';
 
 // Mock data
 const mockVendors: Vendor[] = [
@@ -42,6 +43,8 @@ export default function VendorList() {
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showCoaDialog, setShowCoaDialog] = useState(false);
+  const [coaVendor, setCoaVendor] = useState<Vendor | null>(null);
 
   const filteredVendors = vendors.filter(vendor =>
     vendor.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,6 +72,11 @@ export default function VendorList() {
   const handleFormClose = () => {
     setShowForm(false);
     setSelectedVendor(null);
+  };
+
+  const handleManageCOA = (vendor: Vendor) => {
+    setCoaVendor(vendor);
+    setShowCoaDialog(true);
   };
 
   if (showForm) {
@@ -152,6 +160,14 @@ export default function VendorList() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleManageCOA(vendor)}
+                        title="Master COA Vendor"
+                      >
+                        <FolderOpen className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleView(vendor)}>
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -179,6 +195,18 @@ export default function VendorList() {
           )}
         </CardContent>
       </Card>
+
+      {/* COA Management Dialog */}
+      {coaVendor && (
+        <VendorCOAManagementDialog
+          vendor={coaVendor}
+          open={showCoaDialog}
+          onClose={() => {
+            setShowCoaDialog(false);
+            setCoaVendor(null);
+          }}
+        />
+      )}
     </div>
   );
 }

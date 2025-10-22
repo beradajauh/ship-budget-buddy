@@ -1,15 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Vendor, VendorCOA, FormMode } from '@/types';
-import VendorCOAMappingDialog from './VendorCOAMappingDialog';
-import VendorCOAForm from './VendorCOAForm';
+import { Vendor, FormMode } from '@/types';
 
 interface VendorFormProps {
   mode: FormMode;
@@ -29,17 +26,6 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
     status: vendor?.status || 'Active',
   });
 
-  // Mock COA data
-  const [coaList, setCoaList] = useState<VendorCOA[]>([
-    { id: '1', vendorId: vendor?.id || '', vendorCoaCode: 'VEN001', vendorCoaName: 'Services', description: 'Service charges', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: '2', vendorId: vendor?.id || '', vendorCoaCode: 'VEN002', vendorCoaName: 'Supplies', description: 'Material supplies', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  ]);
-
-  const [showCoaDialog, setShowCoaDialog] = useState(false);
-  const [coaFormMode, setCoaFormMode] = useState<FormMode>('create');
-  const [editingCoa, setEditingCoa] = useState<VendorCOA | null>(null);
-  const [selectedCoaForMapping, setSelectedCoaForMapping] = useState<VendorCOA | null>(null);
-
   const isReadonly = mode === 'view';
   const title = mode === 'create' ? 'Add New Vendor' : mode === 'edit' ? 'Edit Vendor' : 'Vendor Details';
 
@@ -52,40 +38,6 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddCoa = () => {
-    setCoaFormMode('create');
-    setEditingCoa(null);
-    setShowCoaDialog(true);
-  };
-
-  const handleEditCoa = (coa: VendorCOA, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCoaFormMode('edit');
-    setEditingCoa(coa);
-    setShowCoaDialog(true);
-  };
-
-  const handleDeleteCoa = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCoaList(coaList.filter(c => c.id !== id));
-  };
-
-  const handleSaveCoa = (coa: VendorCOA) => {
-    if (coaFormMode === 'create') {
-      const newCoa: VendorCOA = {
-        ...coa,
-        id: Date.now().toString(),
-        vendorId: vendor?.id || '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setCoaList([...coaList, newCoa]);
-    } else {
-      setCoaList(coaList.map(c => c.id === coa.id ? { ...coa, updatedAt: new Date().toISOString() } : c));
-    }
-    setShowCoaDialog(false);
   };
 
   return (
@@ -217,90 +169,6 @@ export default function VendorForm({ mode, vendor, onSave, onClose }: VendorForm
         </CardContent>
       </Card>
 
-      {/* Master COA Vendor Button */}
-      {!isReadonly && (
-        <div className="flex justify-end">
-          <Button 
-            type="button" 
-            onClick={handleAddCoa}
-            variant="outline"
-            className="gap-2"
-          >
-            <FolderOpen className="h-4 w-4" />
-            Master COA Vendor
-          </Button>
-        </div>
-      )}
-
-      {/* COA Detail Table */}
-      <Card className="border-border">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-foreground">COA Vendor Detail</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vendor COA Code</TableHead>
-                <TableHead>Vendor COA Name</TableHead>
-                <TableHead>Description</TableHead>
-                {!isReadonly && <TableHead className="text-right">Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {coaList.map((coa) => (
-                <TableRow 
-                  key={coa.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedCoaForMapping(coa)}
-                >
-                  <TableCell className="font-medium">{coa.vendorCoaCode}</TableCell>
-                  <TableCell>{coa.vendorCoaName}</TableCell>
-                  <TableCell>{coa.description}</TableCell>
-                  {!isReadonly && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm" onClick={(e) => handleEditCoa(coa, e)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={(e) => handleDeleteCoa(coa.id, e)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {coaList.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={isReadonly ? 3 : 4} className="text-center text-muted-foreground">
-                    No COA records found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* COA Form Dialog */}
-      <VendorCOAForm
-        mode={coaFormMode}
-        vendorCOA={editingCoa}
-        open={showCoaDialog}
-        onClose={() => setShowCoaDialog(false)}
-        onSave={handleSaveCoa}
-      />
-
-      {/* COA Mapping Dialog */}
-      {selectedCoaForMapping && (
-        <VendorCOAMappingDialog
-          vendorCoa={selectedCoaForMapping}
-          vendorId={vendor?.id || ''}
-          onClose={() => setSelectedCoaForMapping(null)}
-          readonly={isReadonly}
-        />
-      )}
     </div>
   );
 }

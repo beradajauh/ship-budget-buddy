@@ -48,7 +48,7 @@ export default function VendorCOAForm({ mode, vendorCOA, open, onClose, onSave }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' && 'Add COA Vendor'}
@@ -62,8 +62,8 @@ export default function VendorCOAForm({ mode, vendorCOA, open, onClose, onSave }
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="vendorCoaCode">Vendor COA Code *</Label>
               <Input
