@@ -95,10 +95,10 @@ export default function Layout() {
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex items-center justify-between h-16 px-6 bg-primary-dark">
+        <div className="flex items-center justify-between h-16 px-6 bg-primary-dark flex-shrink-0">
           <div className="flex items-center">
             <Anchor className="h-8 w-8 text-primary-foreground" />
             <span className="ml-2 text-xl font-bold text-primary-foreground">ShipMS</span>
@@ -113,7 +113,7 @@ export default function Layout() {
           </Button>
         </div>
         
-        <nav className="mt-6 px-3">
+        <nav className="flex-1 overflow-y-auto px-3 py-6">
           {filteredNavigation.map((item) => (
             <div key={item.name}>
               {item.children ? (
