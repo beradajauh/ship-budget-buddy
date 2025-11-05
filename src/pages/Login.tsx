@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, Loader2 } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -68,6 +69,32 @@ export default function Login() {
       });
     } catch (error) {
       console.error("Error checking user type:", error);
+    }
+  };
+
+  const handleSetupSampleData = async () => {
+    setSetupLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('setup-sample-users');
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "Setup berhasil",
+          description: "Sample users telah dibuat. Silakan login dengan credentials di atas.",
+        });
+      } else {
+        throw new Error(data?.error || 'Setup failed');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Setup gagal",
+        description: error.message || "Gagal membuat sample users",
+        variant: "destructive",
+      });
+    } finally {
+      setSetupLoading(false);
     }
   };
 
@@ -140,6 +167,34 @@ export default function Login() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Loading..." : "Login"}
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Pertama kali?
+                </span>
+              </div>
+            </div>
+
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleSetupSampleData}
+              disabled={setupLoading}
+            >
+              {setupLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Setup Sample Data...
+                </>
+              ) : (
+                "Setup Sample Data"
+              )}
             </Button>
           </form>
         </CardContent>
