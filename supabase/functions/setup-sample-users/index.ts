@@ -79,8 +79,8 @@ serve(async (req) => {
 
     console.log('Vendor auth created:', vendorAuth.user.id);
 
-    // Get or create vendor id
-    let vendorId = 'vendor-001';
+    // Generate UUID for vendor_id (sample vendor)
+    const vendorId = crypto.randomUUID();
 
     // Check if vendor_users record already exists
     const { data: existingVendor } = await supabaseClient
