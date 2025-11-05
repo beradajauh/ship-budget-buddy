@@ -14,7 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      budget_realizations: {
+        Row: {
+          actual_amount: number
+          budget_amount: number
+          company_id: string
+          created_at: string
+          currency: string
+          id: string
+          period: string
+          updated_at: string
+          variance: number | null
+          vendor_id: string
+          vessel_id: string
+        }
+        Insert: {
+          actual_amount?: number
+          budget_amount: number
+          company_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          period: string
+          updated_at?: string
+          variance?: number | null
+          vendor_id: string
+          vessel_id: string
+        }
+        Update: {
+          actual_amount?: number
+          budget_amount?: number
+          company_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          period?: string
+          updated_at?: string
+          variance?: number | null
+          vendor_id?: string
+          vessel_id?: string
+        }
+        Relationships: []
+      }
+      debit_notes: {
+        Row: {
+          company_id: string
+          created_at: string
+          currency: string
+          debit_note_date: string
+          debit_note_no: string
+          id: string
+          linked_ap_doc: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          vendor_id: string
+          vendor_invoice_no: string
+          vessel_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          currency?: string
+          debit_note_date: string
+          debit_note_no: string
+          id?: string
+          linked_ap_doc?: string | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+          vendor_id: string
+          vendor_invoice_no: string
+          vessel_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          currency?: string
+          debit_note_date?: string
+          debit_note_no?: string
+          id?: string
+          linked_ap_doc?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vendor_id?: string
+          vendor_invoice_no?: string
+          vessel_id?: string
+        }
+        Relationships: []
+      }
+      vendor_users: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string
+          email: string
+          id: string
+          status: string
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          status?: string
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
