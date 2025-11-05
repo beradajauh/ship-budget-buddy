@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Plus, Edit, Trash2, FolderOpen, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, FolderOpen, Upload, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
   Dialog,
@@ -135,6 +135,26 @@ export default function CompanyCOAManagementDialog({
     reader.readAsBinaryString(file);
   };
 
+  const handleDownloadTemplate = () => {
+    const template = [
+      {
+        'COA Code': 'COA001',
+        'COA Name': 'Operating Expenses',
+        'Description': 'Day to day operational costs'
+      },
+      {
+        'COA Code': 'COA002',
+        'COA Name': 'Maintenance & Repairs',
+        'Description': 'Vessel maintenance costs'
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Company COA Template');
+    XLSX.writeFile(workbook, `Company_COA_Template_${companyName}.xlsx`);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -160,6 +180,14 @@ export default function CompanyCOAManagementDialog({
                   accept=".xlsx,.xls"
                   className="hidden"
                 />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDownloadTemplate}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Template
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm"

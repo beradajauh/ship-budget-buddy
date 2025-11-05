@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Plus, Edit, Trash2, FolderOpen, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, FolderOpen, Upload, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -110,6 +110,26 @@ export default function VendorCOAManagementDialog({ vendor, open, onClose }: Ven
     reader.readAsBinaryString(file);
   };
 
+  const handleDownloadTemplate = () => {
+    const template = [
+      {
+        'Vendor COA Code': 'VEN001',
+        'Vendor COA Name': 'Services',
+        'Description': 'Service charges'
+      },
+      {
+        'Vendor COA Code': 'VEN002',
+        'Vendor COA Name': 'Supplies',
+        'Description': 'Material supplies'
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Vendor COA Template');
+    XLSX.writeFile(workbook, `Vendor_COA_Template_${vendor.vendorName}.xlsx`);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -130,6 +150,14 @@ export default function VendorCOAManagementDialog({ vendor, open, onClose }: Ven
                 accept=".xlsx,.xls"
                 className="hidden"
               />
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadTemplate} 
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Template
+              </Button>
               <Button 
                 variant="outline" 
                 onClick={() => fileInputRef.current?.click()} 
