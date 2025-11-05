@@ -20,21 +20,6 @@ const navigation = [
     icon: Ship,
   },
   {
-    name: 'Budget Analysis',
-    href: '/budget-analysis',
-    icon: FileText,
-  },
-  {
-    name: 'DN Analysis',
-    href: '/debitnote-analysis',
-    icon: FileText,
-  },
-  {
-    name: 'DN Approval',
-    href: '/debitnote-approval',
-    icon: FileText,
-  },
-  {
     name: 'Master Data',
     icon: FileText,
     children: [
@@ -44,11 +29,17 @@ const navigation = [
     ],
   },
   {
-    name: 'Transactions',
-    icon: DollarSign,
+    name: 'Budgeting',
+    icon: FileText,
     children: [
       { name: 'Yearly Budget', href: '/yearly-budgets', icon: DollarSign },
       { name: 'Monthly Budget', href: '/budgets', icon: DollarSign },
+    ],
+  },
+  {
+    name: 'Transaction',
+    icon: DollarSign,
+    children: [
       { name: 'Budget Realization', href: '/expenses', icon: FileText },
       { name: 'Debit Notes', href: '/debitnotes', icon: Users },
       { name: 'DN Payments', href: '/debitnote-payments', icon: DollarSign },
