@@ -17,6 +17,8 @@ import DebitNoteList from "./components/debitnotes/DebitNoteList";
 import DebitNotePaymentList from "./components/debitnotes/DebitNotePaymentList";
 import DebitNoteAnalysis from "./components/debitnotes/DebitNoteAnalysis";
 import DebitNoteApproval from "./components/debitnotes/DebitNoteApproval";
+import VendorLogin from "./pages/VendorLogin";
+import VendorPortal from "./pages/VendorPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,9 @@ const App = () => (
             <Route path="debitnote-analysis" element={<DebitNoteAnalysis />} />
             <Route path="debitnote-approval" element={<DebitNoteApproval />} />
           </Route>
+          {/* Vendor Portal Routes - Outside Layout */}
+          <Route path="/vendor-login" element={<VendorLogin />} />
+          <Route path="/vendor-portal" element={<VendorPortal />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
