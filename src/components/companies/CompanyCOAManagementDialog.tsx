@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Edit, Trash2, FolderOpen, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,7 @@ export default function CompanyCOAManagementDialog({
   const [editingCoa, setEditingCoa] = useState<CompanyCOA | null>(null);
   const [coaFormMode, setCoaFormMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedCoaForMapping, setSelectedCoaForMapping] = useState<CompanyCOA | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddCoa = () => {
     setCoaFormMode('create');
@@ -100,6 +102,39 @@ export default function CompanyCOAManagementDialog({
     setSelectedCoaForMapping(coa);
   };
 
+  const handleUploadExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = event.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+        const newCOAs: CompanyCOA[] = jsonData.map((row, index) => ({
+          id: (Date.now() + index).toString(),
+          companyId,
+          coaCode: row['COA Code'] || row['coaCode'] || '',
+          coaName: row['COA Name'] || row['coaName'] || '',
+          description: row['Description'] || row['description'] || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }));
+
+        setCoaList([...coaList, ...newCOAs]);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      } catch (error) {
+        console.error('Error parsing Excel file:', error);
+        alert('Error parsing Excel file. Please check the format.');
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -117,10 +152,27 @@ export default function CompanyCOAManagementDialog({
           <Card className="border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-base font-medium">COA List</CardTitle>
-              <Button onClick={handleAddCoa} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add COA
-              </Button>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleUploadExcel}
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Excel
+                </Button>
+                <Button onClick={handleAddCoa} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add COA
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">

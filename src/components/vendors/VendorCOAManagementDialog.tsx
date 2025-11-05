@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Edit, Trash2, FolderOpen, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -40,6 +41,7 @@ export default function VendorCOAManagementDialog({ vendor, open, onClose }: Ven
   const [showCoaForm, setShowCoaForm] = useState(false);
   const [coaFormMode, setCoaFormMode] = useState<FormMode>('create');
   const [editingCoa, setEditingCoa] = useState<VendorCOA | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddCoa = () => {
     setCoaFormMode('create');
@@ -75,6 +77,39 @@ export default function VendorCOAManagementDialog({ vendor, open, onClose }: Ven
     setShowCoaForm(false);
   };
 
+  const handleUploadExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = event.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+        const newCOAs: VendorCOA[] = jsonData.map((row, index) => ({
+          id: (Date.now() + index).toString(),
+          vendorId: vendor.id,
+          vendorCoaCode: row['Vendor COA Code'] || row['vendorCoaCode'] || '',
+          vendorCoaName: row['Vendor COA Name'] || row['vendorCoaName'] || '',
+          description: row['Description'] || row['description'] || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }));
+
+        setCoaList([...coaList, ...newCOAs]);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      } catch (error) {
+        console.error('Error parsing Excel file:', error);
+        alert('Error parsing Excel file. Please check the format.');
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -87,7 +122,22 @@ export default function VendorCOAManagementDialog({ vendor, open, onClose }: Ven
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleUploadExcel}
+                accept=".xlsx,.xls"
+                className="hidden"
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => fileInputRef.current?.click()} 
+                className="gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Upload Excel
+              </Button>
               <Button onClick={handleAddCoa} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Add COA
