@@ -20,6 +20,15 @@ const navigation = [
     icon: Ship,
   },
   {
+    name: 'Analysis',
+    icon: FileText,
+    children: [
+      { name: 'DN Analysis', href: '/debitnote-analysis', icon: FileText },
+      { name: 'Budget Realization', href: '/budget-realization-analysis', icon: FileText },
+      { name: 'Vendor Submitted', href: '/vendor-submitted', icon: FileText },
+    ],
+  },
+  {
     name: 'Master Data',
     icon: FileText,
     children: [
