@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { 
   Ship, 
   Building2, 
@@ -58,6 +58,38 @@ const navigation = [
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const role = localStorage.getItem('userRole');
+    setUserRole(role);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userEmail');
+    navigate('/login');
+  };
+
+  const filteredNavigation = userRole === 'vendor' 
+    ? navigation.filter(item => 
+        item.name === 'Dashboard' || 
+        (item.children && item.children.some(child => 
+          child.name === 'Budget Realization' || child.name === 'Debit Notes'
+        ))
+      ).map(item => {
+        if (item.children) {
+          return {
+            ...item,
+            children: item.children.filter(child => 
+              child.name === 'Budget Realization' || child.name === 'Debit Notes'
+            )
+          };
+        }
+        return item;
+      })
+    : navigation;
 
   return (
     <div className="flex h-screen bg-background">
@@ -82,7 +114,7 @@ export default function Layout() {
         </div>
         
         <nav className="mt-6 px-3">
-          {navigation.map((item) => (
+          {filteredNavigation.map((item) => (
             <div key={item.name}>
               {item.children ? (
                 <div className="mb-4">
@@ -144,7 +176,12 @@ export default function Layout() {
             </Button>
             <h1 className="text-xl font-semibold text-foreground">Ship Management System</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Welcome, Admin</span>
+              <span className="text-sm text-muted-foreground">
+                Welcome, {userRole === 'admin' ? 'Admin' : 'Vendor'}
+              </span>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
             </div>
           </div>
         </header>
