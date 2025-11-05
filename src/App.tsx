@@ -17,11 +17,6 @@ import DebitNoteList from "./components/debitnotes/DebitNoteList";
 import DebitNotePaymentList from "./components/debitnotes/DebitNotePaymentList";
 import DebitNoteAnalysis from "./components/debitnotes/DebitNoteAnalysis";
 import DebitNoteApproval from "./components/debitnotes/DebitNoteApproval";
-import Login from "./pages/Login";
-import VendorPortal from "./pages/VendorPortal";
-import AdminDashboard from "./pages/AdminDashboard";
-import BudgetRealizationPage from "./pages/BudgetRealizationPage";
-import AdminDebitNotesPage from "./pages/AdminDebitNotesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,7 +29,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route index element={<AdminDashboard />} />
+            <Route index element={<Dashboard />} />
             <Route path="budget-analysis" element={<BudgetAnalysis />} />
             <Route path="companies" element={<CompanyList />} />
             <Route path="vessels" element={<VesselList />} />
@@ -47,13 +42,7 @@ const App = () => (
             <Route path="debitnote-payments" element={<DebitNotePaymentList />} />
             <Route path="debitnote-analysis" element={<DebitNoteAnalysis />} />
             <Route path="debitnote-approval" element={<DebitNoteApproval />} />
-            <Route path="budget-realization" element={<BudgetRealizationPage />} />
-            <Route path="admin-debitnotes" element={<AdminDebitNotesPage />} />
           </Route>
-          {/* Public Routes - Outside Layout */}
-          <Route path="/login" element={<Login />} />
-          {/* Vendor Portal Routes - Outside Layout */}
-          <Route path="/vendor-portal" element={<VendorPortal />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

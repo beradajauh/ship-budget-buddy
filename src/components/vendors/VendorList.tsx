@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Users, FolderOpen, UserPlus } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Users, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Vendor, FormMode } from '@/types';
 import VendorForm from './VendorForm';
 import VendorCOAManagementDialog from './VendorCOAManagementDialog';
-import VendorUserForm from './VendorUserForm';
 
 // Mock data
 const mockVendors: Vendor[] = [
@@ -46,8 +45,6 @@ export default function VendorList() {
   const [showForm, setShowForm] = useState(false);
   const [showCoaDialog, setShowCoaDialog] = useState(false);
   const [coaVendor, setCoaVendor] = useState<Vendor | null>(null);
-  const [showUserForm, setShowUserForm] = useState(false);
-  const [userVendor, setUserVendor] = useState<Vendor | null>(null);
 
   const filteredVendors = vendors.filter(vendor =>
     vendor.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,11 +77,6 @@ export default function VendorList() {
   const handleManageCOA = (vendor: Vendor) => {
     setCoaVendor(vendor);
     setShowCoaDialog(true);
-  };
-
-  const handleCreateUser = (vendor: Vendor) => {
-    setUserVendor(vendor);
-    setShowUserForm(true);
   };
 
   if (showForm) {
@@ -171,14 +163,6 @@ export default function VendorList() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => handleCreateUser(vendor)}
-                        title="Buat Akun Vendor"
-                      >
-                        <UserPlus className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
                         onClick={() => handleManageCOA(vendor)}
                         title="Master COA Vendor"
                       >
@@ -220,22 +204,6 @@ export default function VendorList() {
           onClose={() => {
             setShowCoaDialog(false);
             setCoaVendor(null);
-          }}
-        />
-      )}
-
-      {/* Vendor User Form Dialog */}
-      {userVendor && (
-        <VendorUserForm
-          vendorId={userVendor.id}
-          vendorName={userVendor.vendorName}
-          open={showUserForm}
-          onClose={() => {
-            setShowUserForm(false);
-            setUserVendor(null);
-          }}
-          onSuccess={() => {
-            // Refresh vendor list or show success message
           }}
         />
       )}

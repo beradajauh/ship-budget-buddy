@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, Outlet } from 'react-router-dom';
 import { 
   Ship, 
   Building2, 
@@ -8,13 +8,10 @@ import {
   DollarSign, 
   Menu, 
   X,
-  Anchor,
-  LogOut
+  Anchor
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 const navigation = [
   {
@@ -61,46 +58,6 @@ const navigation = [
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [adminUser, setAdminUser] = useState<any>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      navigate("/login");
-      return;
-    }
-
-    // Check if admin
-    const { data: admin } = await supabase
-      .from("admin_users")
-      .select("*")
-      .eq("auth_user_id", session.user.id)
-      .maybeSingle();
-
-    if (!admin) {
-      await supabase.auth.signOut();
-      navigate("/login");
-      return;
-    }
-
-    setAdminUser(admin);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Logout berhasil",
-      description: "Anda telah keluar dari sistem",
-    });
-    navigate("/login");
-  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -187,20 +144,7 @@ export default function Layout() {
             </Button>
             <h1 className="text-xl font-semibold text-foreground">Ship Management System</h1>
             <div className="flex items-center space-x-4">
-              {adminUser && (
-                <span className="text-sm text-muted-foreground">
-                  Welcome, {adminUser.full_name}
-                </span>
-              )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleLogout}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+              <span className="text-sm text-muted-foreground">Welcome, Admin</span>
             </div>
           </div>
         </header>
