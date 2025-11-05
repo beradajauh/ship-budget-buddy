@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BudgetHeader, FormMode } from '@/types';
 import BudgetForm from './BudgetForm';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 // Mock data
 const mockBudgets: BudgetHeader[] = [
@@ -95,7 +96,7 @@ const formatCurrency = (amount: number, currency: string) => {
 };
 
 export default function BudgetList() {
-  const [budgets] = useState<BudgetHeader[]>(mockBudgets);
+  const [budgets, setBudgets] = useLocalStorage<BudgetHeader[]>('budgets', mockBudgets);
   const [searchTerm, setSearchTerm] = useState('');
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedBudget, setSelectedBudget] = useState<BudgetHeader | null>(null);
@@ -130,16 +131,37 @@ export default function BudgetList() {
     setSelectedBudget(null);
   };
 
+  const handleSave = (budgetData: BudgetHeader) => {
+    if (formMode === 'create') {
+      const newBudget: BudgetHeader = {
+        ...budgetData,
+        id: Date.now().toString(),
+        createdDate: new Date().toISOString().split('T')[0],
+      };
+      setBudgets([...budgets, newBudget]);
+    } else if (formMode === 'edit' && selectedBudget) {
+      setBudgets(budgets.map(b => 
+        b.id === selectedBudget.id 
+          ? { ...budgetData, id: selectedBudget.id }
+          : b
+      ));
+    }
+    handleFormClose();
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this budget?')) {
+      setBudgets(budgets.filter(b => b.id !== id));
+    }
+  };
+
   if (showForm) {
     return (
       <BudgetForm
         mode={formMode}
         budget={selectedBudget}
         onClose={handleFormClose}
-        onSave={() => {
-          // Handle save logic here
-          handleFormClose();
-        }}
+        onSave={handleSave}
       />
     );
   }
@@ -232,7 +254,7 @@ export default function BudgetList() {
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(budget.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExpenseHeader, FormMode } from '@/types';
 import ExpenseForm from './ExpenseForm';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 // Mock data
 const mockExpenses: ExpenseHeader[] = [
@@ -90,7 +91,7 @@ const formatCurrency = (amount: number, currency: string) => {
 };
 
 export default function ExpenseList() {
-  const [expenses] = useState<ExpenseHeader[]>(mockExpenses);
+  const [expenses, setExpenses] = useLocalStorage<ExpenseHeader[]>('expenses', mockExpenses);
   const [searchTerm, setSearchTerm] = useState('');
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedExpense, setSelectedExpense] = useState<ExpenseHeader | null>(null);
@@ -126,16 +127,37 @@ export default function ExpenseList() {
     setSelectedExpense(null);
   };
 
+  const handleSave = (expenseData: ExpenseHeader) => {
+    if (formMode === 'create') {
+      const newExpense: ExpenseHeader = {
+        ...expenseData,
+        id: Date.now().toString(),
+        createdDate: new Date().toISOString().split('T')[0],
+      };
+      setExpenses([...expenses, newExpense]);
+    } else if (formMode === 'edit' && selectedExpense) {
+      setExpenses(expenses.map(e => 
+        e.id === selectedExpense.id 
+          ? { ...expenseData, id: selectedExpense.id }
+          : e
+      ));
+    }
+    handleFormClose();
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this realization?')) {
+      setExpenses(expenses.filter(e => e.id !== id));
+    }
+  };
+
   if (showForm) {
     return (
       <ExpenseForm
         mode={formMode}
         expense={selectedExpense}
         onClose={handleFormClose}
-        onSave={() => {
-          // Handle save logic here
-          handleFormClose();
-        }}
+        onSave={handleSave}
       />
     );
   }
@@ -225,7 +247,7 @@ export default function ExpenseList() {
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(expense.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

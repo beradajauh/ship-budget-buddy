@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Vendor, FormMode } from '@/types';
 import VendorForm from './VendorForm';
 import VendorCOAManagementDialog from './VendorCOAManagementDialog';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 // Mock data
 const mockVendors: Vendor[] = [
@@ -38,7 +39,7 @@ const mockVendors: Vendor[] = [
 ];
 
 export default function VendorList() {
-  const [vendors] = useState<Vendor[]>(mockVendors);
+  const [vendors, setVendors] = useLocalStorage<Vendor[]>('vendors', mockVendors);
   const [searchTerm, setSearchTerm] = useState('');
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -79,16 +80,38 @@ export default function VendorList() {
     setShowCoaDialog(true);
   };
 
+  const handleSave = (vendorData: Vendor) => {
+    if (formMode === 'create') {
+      const newVendor: Vendor = {
+        ...vendorData,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setVendors([...vendors, newVendor]);
+    } else if (formMode === 'edit' && selectedVendor) {
+      setVendors(vendors.map(v => 
+        v.id === selectedVendor.id 
+          ? { ...vendorData, id: selectedVendor.id, updatedAt: new Date().toISOString() }
+          : v
+      ));
+    }
+    handleFormClose();
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this vendor?')) {
+      setVendors(vendors.filter(v => v.id !== id));
+    }
+  };
+
   if (showForm) {
     return (
       <VendorForm
         mode={formMode}
         vendor={selectedVendor}
         onClose={handleFormClose}
-        onSave={() => {
-          // Handle save logic here
-          handleFormClose();
-        }}
+        onSave={handleSave}
       />
     );
   }
@@ -174,7 +197,7 @@ export default function VendorList() {
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(vendor)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(vendor.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

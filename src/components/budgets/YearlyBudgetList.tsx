@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { YearlyBudgetHeader, FormMode } from '@/types';
 import YearlyBudgetForm from './YearlyBudgetForm';
 import { Progress } from '@/components/ui/progress';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 // Mock data
 const mockYearlyBudgets: YearlyBudgetHeader[] = [
@@ -89,7 +90,7 @@ const formatCurrency = (amount: number, currency: string) => {
 };
 
 export default function YearlyBudgetList() {
-  const [budgets] = useState<YearlyBudgetHeader[]>(mockYearlyBudgets);
+  const [budgets, setBudgets] = useLocalStorage<YearlyBudgetHeader[]>('yearlyBudgets', mockYearlyBudgets);
   const [searchTerm, setSearchTerm] = useState('');
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedBudget, setSelectedBudget] = useState<YearlyBudgetHeader | null>(null);
@@ -124,15 +125,37 @@ export default function YearlyBudgetList() {
     setSelectedBudget(null);
   };
 
+  const handleSave = (budgetData: YearlyBudgetHeader) => {
+    if (formMode === 'create') {
+      const newBudget: YearlyBudgetHeader = {
+        ...budgetData,
+        id: Date.now().toString(),
+        createdDate: new Date().toISOString().split('T')[0],
+      };
+      setBudgets([...budgets, newBudget]);
+    } else if (formMode === 'edit' && selectedBudget) {
+      setBudgets(budgets.map(b => 
+        b.id === selectedBudget.id 
+          ? { ...budgetData, id: selectedBudget.id }
+          : b
+      ));
+    }
+    handleFormClose();
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this yearly budget?')) {
+      setBudgets(budgets.filter(b => b.id !== id));
+    }
+  };
+
   if (showForm) {
     return (
       <YearlyBudgetForm
         mode={formMode}
         budget={selectedBudget}
         onClose={handleFormClose}
-        onSave={() => {
-          handleFormClose();
-        }}
+        onSave={handleSave}
       />
     );
   }
@@ -234,7 +257,7 @@ export default function YearlyBudgetList() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(budget.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

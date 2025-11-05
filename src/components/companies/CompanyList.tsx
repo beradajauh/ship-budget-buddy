@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Company, FormMode } from '@/types';
 import CompanyForm from './CompanyForm';
 import CompanyCOAManagementDialog from './CompanyCOAManagementDialog';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 // Mock data
 const mockCompanies: Company[] = [
@@ -36,7 +37,7 @@ const mockCompanies: Company[] = [
 ];
 
 export default function CompanyList() {
-  const [companies] = useState<Company[]>(mockCompanies);
+  const [companies, setCompanies] = useLocalStorage<Company[]>('companies', mockCompanies);
   const [searchTerm, setSearchTerm] = useState('');
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
@@ -77,16 +78,38 @@ export default function CompanyList() {
     setShowCoaManagement(true);
   };
 
+  const handleSave = (companyData: Company) => {
+    if (formMode === 'create') {
+      const newCompany: Company = {
+        ...companyData,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setCompanies([...companies, newCompany]);
+    } else if (formMode === 'edit' && selectedCompany) {
+      setCompanies(companies.map(c => 
+        c.id === selectedCompany.id 
+          ? { ...companyData, id: selectedCompany.id, updatedAt: new Date().toISOString() }
+          : c
+      ));
+    }
+    handleFormClose();
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this company?')) {
+      setCompanies(companies.filter(c => c.id !== id));
+    }
+  };
+
   if (showForm) {
     return (
       <CompanyForm
         mode={formMode}
         company={selectedCompany}
         onClose={handleFormClose}
-        onSave={() => {
-          // Handle save logic here
-          handleFormClose();
-        }}
+        onSave={handleSave}
       />
     );
   }
@@ -170,7 +193,7 @@ export default function CompanyList() {
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(company)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(company.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

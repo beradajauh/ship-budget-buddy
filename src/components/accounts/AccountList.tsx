@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChartOfAccount, FormMode } from '@/types';
 import AccountForm from './AccountForm';
 import { cn } from '@/lib/utils';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 // Mock data with hierarchy
 const mockAccounts: ChartOfAccount[] = [
@@ -186,7 +187,7 @@ function AccountItem({ account, level, onEdit, onView, onDelete }: AccountItemPr
 }
 
 export default function AccountList() {
-  const [accounts] = useState<ChartOfAccount[]>(mockAccounts);
+  const [accounts, setAccounts] = useLocalStorage<ChartOfAccount[]>('accounts', mockAccounts);
   const [searchTerm, setSearchTerm] = useState('');
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedAccount, setSelectedAccount] = useState<ChartOfAccount | null>(null);
@@ -229,13 +230,33 @@ export default function AccountList() {
   };
 
   const handleDelete = (account: ChartOfAccount) => {
-    // Handle delete logic here
-    console.log('Delete account:', account);
+    if (confirm('Are you sure you want to delete this account?')) {
+      setAccounts(accounts.filter(a => a.id !== account.id));
+    }
   };
 
   const handleFormClose = () => {
     setShowForm(false);
     setSelectedAccount(null);
+  };
+
+  const handleSave = (accountData: ChartOfAccount) => {
+    if (formMode === 'create') {
+      const newAccount: ChartOfAccount = {
+        ...accountData,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setAccounts([...accounts, newAccount]);
+    } else if (formMode === 'edit' && selectedAccount) {
+      setAccounts(accounts.map(a => 
+        a.id === selectedAccount.id 
+          ? { ...accountData, id: selectedAccount.id, updatedAt: new Date().toISOString() }
+          : a
+      ));
+    }
+    handleFormClose();
   };
 
   if (showForm) {
@@ -244,10 +265,7 @@ export default function AccountList() {
         mode={formMode}
         account={selectedAccount}
         onClose={handleFormClose}
-        onSave={() => {
-          // Handle save logic here
-          handleFormClose();
-        }}
+        onSave={handleSave}
       />
     );
   }

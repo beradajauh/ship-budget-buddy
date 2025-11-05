@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Vessel, FormMode } from '@/types';
 import VesselForm from './VesselForm';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 // Mock data
 const mockVessels: Vessel[] = [
@@ -40,7 +41,7 @@ const mockVessels: Vessel[] = [
 ];
 
 export default function VesselList() {
-  const [vessels] = useState<Vessel[]>(mockVessels);
+  const [vessels, setVessels] = useLocalStorage<Vessel[]>('vessels', mockVessels);
   const [searchTerm, setSearchTerm] = useState('');
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [selectedVessel, setSelectedVessel] = useState<Vessel | null>(null);
@@ -74,16 +75,38 @@ export default function VesselList() {
     setSelectedVessel(null);
   };
 
+  const handleSave = (vesselData: Vessel) => {
+    if (formMode === 'create') {
+      const newVessel: Vessel = {
+        ...vesselData,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setVessels([...vessels, newVessel]);
+    } else if (formMode === 'edit' && selectedVessel) {
+      setVessels(vessels.map(v => 
+        v.id === selectedVessel.id 
+          ? { ...vesselData, id: selectedVessel.id, updatedAt: new Date().toISOString() }
+          : v
+      ));
+    }
+    handleFormClose();
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this vessel?')) {
+      setVessels(vessels.filter(v => v.id !== id));
+    }
+  };
+
   if (showForm) {
     return (
       <VesselForm
         mode={formMode}
         vessel={selectedVessel}
         onClose={handleFormClose}
-        onSave={() => {
-          // Handle save logic here
-          handleFormClose();
-        }}
+        onSave={handleSave}
       />
     );
   }
@@ -168,7 +191,7 @@ export default function VesselList() {
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(vessel)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(vessel.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

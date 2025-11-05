@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { DebitNoteHeader, FormMode } from '@/types';
 import DebitNoteForm from './DebitNoteForm';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 // Mock data
 const mockDebitNotes: DebitNoteHeader[] = [
@@ -141,7 +142,7 @@ const formatDate = (dateString: string) => {
 };
 
 export default function DebitNoteList() {
-  const [debitNotes, setDebitNotes] = useState<DebitNoteHeader[]>(mockDebitNotes);
+  const [debitNotes, setDebitNotes] = useLocalStorage<DebitNoteHeader[]>('debitNotes', mockDebitNotes);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formMode, setFormMode] = useState<FormMode>('create');
@@ -196,6 +197,12 @@ export default function DebitNoteList() {
       ));
     }
     handleFormClose();
+  };
+
+  const handleDeleteDebitNote = (id: string) => {
+    if (confirm('Are you sure you want to delete this debit note?')) {
+      setDebitNotes(debitNotes.filter(d => d.id !== id));
+    }
   };
 
   if (showForm) {
@@ -287,6 +294,7 @@ export default function DebitNoteList() {
                         variant="outline"
                         size="sm"
                         className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteDebitNote(debitNote.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

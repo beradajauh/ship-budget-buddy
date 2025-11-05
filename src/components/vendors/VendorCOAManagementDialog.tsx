@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VendorCOA, FormMode, Vendor } from '@/types';
 import VendorCOAForm from './VendorCOAForm';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface VendorCOAManagementDialogProps {
   vendor: Vendor;
@@ -13,8 +14,7 @@ interface VendorCOAManagementDialogProps {
 }
 
 export default function VendorCOAManagementDialog({ vendor, open, onClose }: VendorCOAManagementDialogProps) {
-  // Mock COA data
-  const [coaList, setCoaList] = useState<VendorCOA[]>([
+  const initialCOAs: VendorCOA[] = [
     { 
       id: '1', 
       vendorId: vendor.id, 
@@ -33,7 +33,9 @@ export default function VendorCOAManagementDialog({ vendor, open, onClose }: Ven
       createdAt: new Date().toISOString(), 
       updatedAt: new Date().toISOString() 
     },
-  ]);
+  ];
+  
+  const [coaList, setCoaList] = useLocalStorage<VendorCOA[]>(`vendorCOA_${vendor.id}`, initialCOAs);
 
   const [showCoaForm, setShowCoaForm] = useState(false);
   const [coaFormMode, setCoaFormMode] = useState<FormMode>('create');
@@ -52,7 +54,9 @@ export default function VendorCOAManagementDialog({ vendor, open, onClose }: Ven
   };
 
   const handleDeleteCoa = (id: string) => {
-    setCoaList(coaList.filter(c => c.id !== id));
+    if (confirm('Are you sure you want to delete this COA?')) {
+      setCoaList(coaList.filter(c => c.id !== id));
+    }
   };
 
   const handleSaveCoa = (coa: VendorCOA) => {

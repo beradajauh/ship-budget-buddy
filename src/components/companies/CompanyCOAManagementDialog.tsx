@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CompanyCOA } from '@/types';
 import CompanyCOAForm from './CompanyCOAForm';
 import COAMappingDialog from './COAMappingDialog';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface CompanyCOAManagementDialogProps {
   companyId: string;
@@ -27,8 +28,7 @@ export default function CompanyCOAManagementDialog({
   open,
   onClose,
 }: CompanyCOAManagementDialogProps) {
-  // Mock data for COAs
-  const [coaList, setCoaList] = useState<CompanyCOA[]>([
+  const initialCOAs: CompanyCOA[] = [
     {
       id: '1',
       companyId,
@@ -47,7 +47,9 @@ export default function CompanyCOAManagementDialog({
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
-  ]);
+  ];
+  
+  const [coaList, setCoaList] = useLocalStorage<CompanyCOA[]>(`companyCOA_${companyId}`, initialCOAs);
 
   const [showCoaForm, setShowCoaForm] = useState(false);
   const [editingCoa, setEditingCoa] = useState<CompanyCOA | null>(null);
@@ -80,9 +82,16 @@ export default function CompanyCOAManagementDialog({
 
   const handleSaveCoa = (coa: CompanyCOA) => {
     if (coaFormMode === 'edit') {
-      setCoaList(coaList.map((c) => (c.id === coa.id ? coa : c)));
+      setCoaList(coaList.map((c) => (c.id === coa.id ? { ...coa, updatedAt: new Date().toISOString() } : c)));
     } else {
-      setCoaList([...coaList, coa]);
+      const newCoa: CompanyCOA = {
+        ...coa,
+        id: Date.now().toString(),
+        companyId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setCoaList([...coaList, newCoa]);
     }
     setShowCoaForm(false);
   };
