@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
-export default function VendorLogin() {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,18 +20,56 @@ export default function VendorLogin() {
     // Check if already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/vendor-portal");
+        redirectUser(session.user.id);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/vendor-portal");
+        redirectUser(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
+
+  const redirectUser = async (userId: string) => {
+    try {
+      // Check if admin
+      const { data: adminUser } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("auth_user_id", userId)
+        .maybeSingle();
+
+      if (adminUser) {
+        navigate("/");
+        return;
+      }
+
+      // Check if vendor
+      const { data: vendorUser } = await supabase
+        .from("vendor_users")
+        .select("*")
+        .eq("auth_user_id", userId)
+        .maybeSingle();
+
+      if (vendorUser) {
+        navigate("/vendor-portal");
+        return;
+      }
+
+      // Unknown user type
+      await supabase.auth.signOut();
+      toast({
+        title: "Akses ditolak",
+        description: "Akun Anda tidak memiliki akses ke sistem",
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Error checking user type:", error);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,35 +77,19 @@ export default function VendorLogin() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
       if (error) throw error;
 
-      // Verify vendor user exists
-      const { data: vendorUser, error: vendorError } = await supabase
-        .from("vendor_users")
-        .select("*")
-        .eq("auth_user_id", data.user.id)
-        .single();
-
-      if (vendorError || !vendorUser) {
-        await supabase.auth.signOut();
-        throw new Error("Akun vendor tidak ditemukan");
-      }
-
-      toast({
-        title: "Login berhasil",
-        description: "Selamat datang di portal vendor",
-      });
+      // User will be redirected by the auth state change listener
     } catch (error: any) {
       toast({
         title: "Login gagal",
-        description: error.message,
+        description: error.message || "Email atau password salah",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -74,22 +98,32 @@ export default function VendorLogin() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Vendor Portal</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
           <CardDescription className="text-center">
-            Login untuk mengakses budget realization dan debit notes
+            Masuk ke sistem menggunakan email dan password Anda
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <Alert>
+            <InfoIcon className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              <strong>Sample Login:</strong><br/>
+              Admin: admin@company.com / admin123<br/>
+              Vendor: vendor@marina.com / vendor123
+            </AlertDescription>
+          </Alert>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="vendor@example.com"
+                placeholder="email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -97,9 +131,11 @@ export default function VendorLogin() {
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
