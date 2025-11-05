@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       budget_realizations: {
         Row: {
           actual_amount: number
