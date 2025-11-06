@@ -15,28 +15,8 @@ interface VendorCOAManagementDialogProps {
 }
 
 export default function VendorCOAManagementDialog({ vendor, open, onClose }: VendorCOAManagementDialogProps) {
-  const initialCOAs: VendorCOA[] = [
-    { 
-      id: '1', 
-      vendorId: vendor.id, 
-      vendorCoaCode: 'VEN001', 
-      vendorCoaName: 'Services', 
-      description: 'Service charges', 
-      createdAt: new Date().toISOString(), 
-      updatedAt: new Date().toISOString() 
-    },
-    { 
-      id: '2', 
-      vendorId: vendor.id, 
-      vendorCoaCode: 'VEN002', 
-      vendorCoaName: 'Supplies', 
-      description: 'Material supplies', 
-      createdAt: new Date().toISOString(), 
-      updatedAt: new Date().toISOString() 
-    },
-  ];
-  
-  const [coaList, setCoaList] = useLocalStorage<VendorCOA[]>(`vendorCOA_${vendor.id}`, initialCOAs);
+  // Load from localStorage, default to empty array
+  const [coaList, setCoaList] = useLocalStorage<VendorCOA[]>(`vendorCOA_${vendor.id}`, []);
 
   const [showCoaForm, setShowCoaForm] = useState(false);
   const [coaFormMode, setCoaFormMode] = useState<FormMode>('create');

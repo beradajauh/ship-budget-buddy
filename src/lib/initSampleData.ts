@@ -178,12 +178,17 @@ export const initSampleData = () => {
   const existingVendors = localStorage.getItem('vendors');
   if (!existingVendors) {
     localStorage.setItem('vendors', JSON.stringify(vendors));
+    console.log('✓ Vendors data initialized');
   }
 
-  // Initialize vendor COAs
+  // Initialize vendor COAs - force update to ensure data is fresh
   localStorage.setItem('vendorCOA_vendor-1', JSON.stringify(vendorCOAs1));
   localStorage.setItem('vendorCOA_vendor-2', JSON.stringify(vendorCOAs2));
   localStorage.setItem('vendorCOA_vendor-3', JSON.stringify(vendorCOAs3));
+  console.log('✓ Vendor COAs initialized for all vendors');
+  console.log('  - vendorCOA_vendor-1:', vendorCOAs1.length, 'items');
+  console.log('  - vendorCOA_vendor-2:', vendorCOAs2.length, 'items');
+  console.log('  - vendorCOA_vendor-3:', vendorCOAs3.length, 'items');
 
   // Initialize company COAs for existing companies
   const existingCompanies = localStorage.getItem('companies');
