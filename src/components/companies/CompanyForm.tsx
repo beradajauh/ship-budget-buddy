@@ -101,10 +101,24 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
     const vendor = vendors.find(v => v.id === selectedVendor);
     if (!vendor) return;
 
+    console.log('=== DEBUG ADD VENDOR ===');
+    console.log('Selected Vendor ID:', selectedVendor);
+    console.log('Vendor Name:', vendor.vendorName);
+    
+    // Debug: Check all localStorage keys
+    console.log('All localStorage keys:', Object.keys(localStorage));
+    console.log('Keys containing "vendorCOA":', Object.keys(localStorage).filter(k => k.includes('vendorCOA')));
+    
     // Load vendor COAs from localStorage
     const vendorCOAsKey = `vendorCOA_${selectedVendor}`;
+    console.log('Looking for key:', vendorCOAsKey);
+    
     const vendorCOAsJson = localStorage.getItem(vendorCOAsKey);
+    console.log('Raw JSON from localStorage:', vendorCOAsJson);
+    
     const vendorCOAs: VendorCOA[] = vendorCOAsJson ? JSON.parse(vendorCOAsJson) : [];
+    console.log('Parsed vendor COAs:', vendorCOAs);
+    console.log('Number of COAs found:', vendorCOAs.length);
 
     if (vendorCOAs.length === 0) {
       const shouldNavigate = confirm(
@@ -136,6 +150,7 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
       updatedAt: new Date().toISOString(),
     }));
 
+    console.log('Created mappings:', newMappings);
     setMappings([...mappings, ...newMappings]);
     setSelectedVendor('');
   };
