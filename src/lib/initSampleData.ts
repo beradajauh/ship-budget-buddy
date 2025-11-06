@@ -18,10 +18,10 @@ export const initSampleData = () => {
     {
       id: 'vendor-2',
       vendorCode: 'VND002',
-      vendorName: 'CV Mitra Maritim',
+      vendorName: 'PT MBS',
       address: 'Jl. Laut No. 78, Jakarta',
       phone: '+62 21 9999999',
-      email: 'contact@mitramaritim.com',
+      email: 'contact@mbs.com',
       taxId: '02.345.678.9-012.000',
       status: 'Active',
       createdAt: '2024-01-12',
@@ -179,16 +179,20 @@ export const initSampleData = () => {
   if (!existingVendors) {
     localStorage.setItem('vendors', JSON.stringify(vendors));
     console.log('✓ Vendors data initialized');
+  } else {
+    // Update existing vendors data to ensure consistency
+    localStorage.setItem('vendors', JSON.stringify(vendors));
+    console.log('✓ Vendors data updated');
   }
 
-  // Initialize vendor COAs - force update to ensure data is fresh
+  // Initialize vendor COAs - ALWAYS update to ensure fresh data
   localStorage.setItem('vendorCOA_vendor-1', JSON.stringify(vendorCOAs1));
   localStorage.setItem('vendorCOA_vendor-2', JSON.stringify(vendorCOAs2));
   localStorage.setItem('vendorCOA_vendor-3', JSON.stringify(vendorCOAs3));
   console.log('✓ Vendor COAs initialized for all vendors');
-  console.log('  - vendorCOA_vendor-1:', vendorCOAs1.length, 'items');
-  console.log('  - vendorCOA_vendor-2:', vendorCOAs2.length, 'items');
-  console.log('  - vendorCOA_vendor-3:', vendorCOAs3.length, 'items');
+  console.log('  - vendorCOA_vendor-1 (PT Sumber Jaya Marine):', vendorCOAs1.length, 'items');
+  console.log('  - vendorCOA_vendor-2 (PT MBS):', vendorCOAs2.length, 'items');
+  console.log('  - vendorCOA_vendor-3 (PT Bahari Sejahtera):', vendorCOAs3.length, 'items');
 
   // Initialize company COAs for existing companies
   const existingCompanies = localStorage.getItem('companies');
