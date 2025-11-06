@@ -31,7 +31,11 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
   });
 
   const [vendors] = useLocalStorage<Vendor[]>('vendors', []);
-  const [mappings, setMappings] = useLocalStorage<COAMapping[]>(`companyMappings_${company?.id || 'new'}`, []);
+  // Initialize mappings: empty for new company, load from storage for existing
+  const [mappings, setMappings] = useLocalStorage<COAMapping[]>(
+    `companyMappings_${company?.id || 'new'}`, 
+    mode === 'create' ? [] : undefined
+  );
   const [selectedVendor, setSelectedVendor] = useState<string>('');
   const [mappingDialogVendor, setMappingDialogVendor] = useState<{ id: string; name: string } | null>(null);
 
