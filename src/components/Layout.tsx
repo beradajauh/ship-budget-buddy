@@ -64,6 +64,11 @@ export default function Layout() {
   useEffect(() => {
     const role = localStorage.getItem('userRole');
     setUserRole(role);
+    
+    // Initialize sample data
+    import('@/lib/initSampleData').then(({ initSampleData }) => {
+      initSampleData();
+    });
   }, []);
 
   const handleLogout = () => {
@@ -92,10 +97,10 @@ export default function Layout() {
     : navigation;
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between h-16 px-6 bg-primary-dark flex-shrink-0">
@@ -113,7 +118,7 @@ export default function Layout() {
           </Button>
         </div>
         
-        <nav className="flex-1 overflow-y-auto px-3 py-6">
+        <nav className="flex-1 overflow-y-auto px-3 py-6 scrollbar-thin scrollbar-thumb-primary-light scrollbar-track-transparent">
           {filteredNavigation.map((item) => (
             <div key={item.name}>
               {item.children ? (
@@ -162,9 +167,9 @@ export default function Layout() {
       </div>
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden h-screen">
         {/* Top bar */}
-        <header className="bg-card border-b border-border">
+        <header className="bg-card border-b border-border flex-shrink-0">
           <div className="flex items-center justify-between h-16 px-6">
             <Button
               variant="ghost"

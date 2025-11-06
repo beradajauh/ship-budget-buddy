@@ -39,26 +39,7 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
   const title = mode === 'create' ? 'Add New Company' : mode === 'edit' ? 'Edit Company' : 'Company Details';
 
   // Load all company COAs from localStorage
-  const [companyCOAs] = useLocalStorage<CompanyCOA[]>(`companyCOA_${company?.id || 'temp'}`, [
-    {
-      id: '1',
-      companyId: company?.id || '',
-      coaCode: 'COA001',
-      coaName: 'Operating Expenses',
-      description: 'Day to day operational costs',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      companyId: company?.id || '',
-      coaCode: 'COA002',
-      coaName: 'Maintenance & Repairs',
-      description: 'Vessel maintenance costs',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
+  const [companyCOAs] = useLocalStorage<CompanyCOA[]>(`companyCOA_${company?.id || 'temp'}`, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
