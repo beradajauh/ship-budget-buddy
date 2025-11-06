@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 
 import { Company, CompanyCOA, COAMapping, FormMode, Vendor, VendorCOA } from '@/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import CompanyVendorMappingDialog from './CompanyVendorMappingDialog';
 
 interface CompanyFormProps {
   mode: FormMode;
@@ -31,9 +32,8 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
 
   const [vendors] = useLocalStorage<Vendor[]>('vendors', []);
   const [mappings, setMappings] = useLocalStorage<COAMapping[]>(`companyMappings_${company?.id || 'new'}`, []);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedVendor, setSelectedVendor] = useState<string>('');
-  const [editingMapping, setEditingMapping] = useState<COAMapping | null>(null);
+  const [mappingDialogVendor, setMappingDialogVendor] = useState<{ id: string; name: string } | null>(null);
 
   const isReadonly = mode === 'view';
   const title = mode === 'create' ? 'Add New Company' : mode === 'edit' ? 'Edit Company' : 'Company Details';
@@ -89,10 +89,7 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
   };
 
   const handleAddVendor = () => {
-    if (!selectedVendor) {
-      console.log('No vendor selected');
-      return;
-    }
+    if (!selectedVendor) return;
 
     // Check if vendor already added
     const vendorAlreadyAdded = mappings.some(m => m.vendorId === selectedVendor);
@@ -102,23 +99,12 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
     }
 
     const vendor = vendors.find(v => v.id === selectedVendor);
-    if (!vendor) {
-      console.log('Vendor not found:', selectedVendor);
-      return;
-    }
-
-    console.log('Adding vendor:', vendor.vendorName);
-    console.log('Vendor ID:', selectedVendor);
-    console.log('Looking for COA key:', `vendorCOA_${selectedVendor}`);
+    if (!vendor) return;
 
     // Load vendor COAs from localStorage
     const vendorCOAsKey = `vendorCOA_${selectedVendor}`;
     const vendorCOAsJson = localStorage.getItem(vendorCOAsKey);
-    console.log('Raw vendor COAs JSON:', vendorCOAsJson);
-    
     const vendorCOAs: VendorCOA[] = vendorCOAsJson ? JSON.parse(vendorCOAsJson) : [];
-
-    console.log(`Found ${vendorCOAs.length} COAs for vendor ${vendor.vendorName}:`, vendorCOAs);
 
     if (vendorCOAs.length === 0) {
       const shouldNavigate = confirm(
@@ -132,7 +118,7 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
       return;
     }
 
-    // Create mappings for all vendor COAs with unique IDs
+    // Create placeholder mappings for this vendor
     const timestamp = Date.now();
     const newMappings: COAMapping[] = vendorCOAs.map((vendorCoa, index) => ({
       id: `mapping-${timestamp}-${index}`,
@@ -150,47 +136,35 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
       updatedAt: new Date().toISOString(),
     }));
 
-    console.log('Created mappings:', newMappings);
     setMappings([...mappings, ...newMappings]);
     setSelectedVendor('');
   };
 
-  const handleUpdateMapping = (mappingId: string, field: string, value: string) => {
-    setMappings(mappings.map(m => {
-      if (m.id === mappingId) {
-        const updated = { ...m, [field]: value };
-        
-        // If company COA is selected, auto-fill code and name
-        if (field === 'companyCoaId') {
-          const companyCoa = companyCOAs.find(c => c.id === value);
-          if (companyCoa) {
-            updated.companyCoaCode = companyCoa.coaCode;
-            updated.companyCoaName = companyCoa.coaName;
-          }
-        }
-        
-        return updated;
-      }
-      return m;
-    }));
-  };
-
-  const handleDeleteMapping = (mappingId: string) => {
-    if (confirm('Are you sure you want to delete this mapping?')) {
-      setMappings(mappings.filter(m => m.id !== mappingId));
+  const handleOpenMappingDialog = (vendorId: string) => {
+    const vendor = vendors.find(v => v.id === vendorId);
+    if (vendor) {
+      setMappingDialogVendor({ id: vendorId, name: vendor.vendorName });
     }
   };
 
-  const filteredMappings = mappings.filter(m => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    return (
-      m.vendorCoaCode.toLowerCase().includes(search) ||
-      m.vendorCoaName.toLowerCase().includes(search) ||
-      m.companyCoaCode.toLowerCase().includes(search) ||
-      m.companyCoaName.toLowerCase().includes(search)
-    );
-  });
+  const handleSaveMappings = (updatedMappings: COAMapping[]) => {
+    // Remove old mappings for this vendor
+    const otherMappings = mappings.filter(m => m.vendorId !== mappingDialogVendor?.id);
+    // Add updated mappings
+    setMappings([...otherMappings, ...updatedMappings]);
+  };
+
+  const handleDeleteVendor = (vendorId: string) => {
+    const vendor = vendors.find(v => v.id === vendorId);
+    if (confirm(`Hapus vendor "${vendor?.vendorName}" dan semua mapping COA-nya?`)) {
+      setMappings(mappings.filter(m => m.vendorId !== vendorId));
+    }
+  };
+
+  // Get unique vendors from mappings
+  const linkedVendors = Array.from(new Set(mappings.map(m => m.vendorId)))
+    .map(vendorId => vendors.find(v => v.id === vendorId))
+    .filter(v => v !== undefined) as Vendor[];
 
   const totalMapped = mappings.filter(m => m.companyCoaId !== '').length;
   const totalUnmapped = mappings.length - totalMapped;
@@ -335,116 +309,50 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
               </div>
             )}
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search mappings..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Mappings Table */}
+            {/* Linked Vendors Table */}
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Vendor Name</TableHead>
-                    <TableHead>Vendor COA Code</TableHead>
-                    <TableHead>Vendor COA Name</TableHead>
-                    <TableHead>Company COA</TableHead>
-                    <TableHead>Relationship Type</TableHead>
-                    <TableHead>Notes</TableHead>
-                    {!isReadonly && <TableHead className="text-right">Actions</TableHead>}
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredMappings.map((mapping) => (
-                    <TableRow 
-                      key={mapping.id}
-                      className={mapping.companyCoaId ? 'bg-green-50 dark:bg-green-950/20' : ''}
-                    >
+                  {linkedVendors.map((vendor) => (
+                    <TableRow key={vendor.id}>
                       <TableCell className="font-medium">
-                        {getVendorName(mapping.vendorId)}
+                        {vendor.vendorName}
                       </TableCell>
-                      <TableCell>{mapping.vendorCoaCode}</TableCell>
-                      <TableCell>{mapping.vendorCoaName}</TableCell>
-                      <TableCell>
-                        {isReadonly ? (
-                          <div>
-                            <div className="font-medium">{mapping.companyCoaCode || '-'}</div>
-                            <div className="text-sm text-muted-foreground">{mapping.companyCoaName || '-'}</div>
-                          </div>
-                        ) : (
-                          <Select
-                            value={mapping.companyCoaId}
-                            onValueChange={(value) => handleUpdateMapping(mapping.id, 'companyCoaId', value)}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select COA..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {companyCOAs.map(coa => (
-                                <SelectItem key={coa.id} value={coa.id}>
-                                  {coa.coaCode} - {coa.coaName}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isReadonly ? (
-                          <Badge variant={mapping.relationshipType === 'Equivalent' ? 'default' : 'secondary'}>
-                            {mapping.relationshipType}
-                          </Badge>
-                        ) : (
-                          <Select
-                            value={mapping.relationshipType}
-                            onValueChange={(value) => handleUpdateMapping(mapping.id, 'relationshipType', value)}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Equivalent">Equivalent</SelectItem>
-                              <SelectItem value="Custom Mapping">Custom Mapping</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isReadonly ? (
-                          <span className="text-sm">{mapping.notes || '-'}</span>
-                        ) : (
-                          <Input
-                            value={mapping.notes || ''}
-                            onChange={(e) => handleUpdateMapping(mapping.id, 'notes', e.target.value)}
-                            placeholder="Add notes..."
-                          />
-                        )}
-                      </TableCell>
-                      {!isReadonly && (
-                        <TableCell className="text-right">
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
                           <Button
                             type="button"
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() => handleDeleteMapping(mapping.id)}
-                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleOpenMappingDialog(vendor.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            COA
                           </Button>
-                        </TableCell>
-                      )}
+                          {!isReadonly && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteVendor(vendor.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
-                  {filteredMappings.length === 0 && (
+                  {linkedVendors.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={isReadonly ? 6 : 7} className="text-center text-muted-foreground py-8">
-                        No COA mappings found. {!isReadonly && 'Add a vendor to start mapping.'}
+                      <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
+                        No linked vendors. {!isReadonly && 'Add a vendor to start mapping.'}
                       </TableCell>
                     </TableRow>
                   )}
@@ -454,6 +362,10 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
 
             {/* Summary */}
             <div className="flex gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Total Vendors</p>
+                <p className="text-2xl font-bold">{linkedVendors.length}</p>
+              </div>
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">Total Mappings</p>
                 <p className="text-2xl font-bold">{mappings.length}</p>
@@ -483,6 +395,19 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
           </div>
         )}
       </form>
+
+      {/* COA Mapping Dialog */}
+      {mappingDialogVendor && (
+        <CompanyVendorMappingDialog
+          vendorId={mappingDialogVendor.id}
+          vendorName={mappingDialogVendor.name}
+          companyId={company?.id || ''}
+          companyCOAs={companyCOAs}
+          mappings={mappings}
+          onSave={handleSaveMappings}
+          onClose={() => setMappingDialogVendor(null)}
+        />
+      )}
     </div>
   );
 }
