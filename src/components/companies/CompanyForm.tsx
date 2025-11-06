@@ -108,16 +108,27 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
     }
 
     console.log('Adding vendor:', vendor.vendorName);
+    console.log('Vendor ID:', selectedVendor);
+    console.log('Looking for COA key:', `vendorCOA_${selectedVendor}`);
 
     // Load vendor COAs from localStorage
     const vendorCOAsKey = `vendorCOA_${selectedVendor}`;
     const vendorCOAsJson = localStorage.getItem(vendorCOAsKey);
+    console.log('Raw vendor COAs JSON:', vendorCOAsJson);
+    
     const vendorCOAs: VendorCOA[] = vendorCOAsJson ? JSON.parse(vendorCOAsJson) : [];
 
-    console.log(`Found ${vendorCOAs.length} COAs for vendor ${vendor.vendorName}`);
+    console.log(`Found ${vendorCOAs.length} COAs for vendor ${vendor.vendorName}:`, vendorCOAs);
 
     if (vendorCOAs.length === 0) {
-      alert('Vendor ini belum memiliki Master COA. Silahkan tambahkan Master COA Vendor terlebih dahulu.');
+      const shouldNavigate = confirm(
+        `Vendor "${vendor.vendorName}" belum memiliki Master COA.\n\n` +
+        `Klik OK untuk kembali ke daftar Vendor dan tambahkan Master COA dengan klik icon Folder pada vendor "${vendor.vendorName}".`
+      );
+      
+      if (shouldNavigate) {
+        onClose();
+      }
       return;
     }
 
