@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { Company, CompanyCOA, COAMapping, FormMode, Vendor, VendorCOA } from '@/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
@@ -164,274 +164,263 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="info">Company Info</TabsTrigger>
-            <TabsTrigger value="mapping">COA Mapping</TabsTrigger>
-          </TabsList>
-
-          {/* Tab 1: Company Info */}
-          <TabsContent value="info" className="space-y-4">
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="text-foreground">Company Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="companyCode">Company Code *</Label>
-                      <Input
-                        id="companyCode"
-                        value={formData.companyCode}
-                        onChange={(e) => handleChange('companyCode', e.target.value)}
-                        placeholder="e.g., PT001"
-                        required
-                        readOnly={isReadonly}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select 
-                        value={formData.status} 
-                        onValueChange={(value) => handleChange('status', value)}
-                        disabled={isReadonly}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Inactive">Inactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name *</Label>
-                    <Input
-                      id="companyName"
-                      value={formData.companyName}
-                      onChange={(e) => handleChange('companyName', e.target.value)}
-                      placeholder="e.g., PT Pelayaran Nusantara"
-                      required
-                      readOnly={isReadonly}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Textarea
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) => handleChange('address', e.target.value)}
-                      placeholder="Company address"
-                      rows={3}
-                      readOnly={isReadonly}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => handleChange('phone', e.target.value)}
-                        placeholder="+62 xxx xxx xxx"
-                        readOnly={isReadonly}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleChange('email', e.target.value)}
-                        placeholder="contact@company.com"
-                        readOnly={isReadonly}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Tab 2: COA Mapping */}
-          <TabsContent value="mapping" className="space-y-4">
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="text-foreground">Linked Vendor and COA Mapping</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Add Vendor Section */}
-                {!isReadonly && (
-                  <div className="flex gap-3">
-                    <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select vendor to add..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vendors.filter(v => v.status === 'Active').map(vendor => (
-                          <SelectItem key={vendor.id} value={vendor.id}>
-                            {vendor.vendorName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button type="button" onClick={handleAddVendor} disabled={!selectedVendor}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Vendor
-                    </Button>
-                  </div>
-                )}
-
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Header Section: Company Info */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">Company Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="companyCode">Company Code *</Label>
                   <Input
-                    placeholder="Search mappings..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    id="companyCode"
+                    value={formData.companyCode}
+                    onChange={(e) => handleChange('companyCode', e.target.value)}
+                    placeholder="e.g., PT001"
+                    required
+                    readOnly={isReadonly}
                   />
                 </div>
 
-                {/* Mappings Table */}
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Vendor Name</TableHead>
-                        <TableHead>Vendor COA Code</TableHead>
-                        <TableHead>Vendor COA Name</TableHead>
-                        <TableHead>Company COA</TableHead>
-                        <TableHead>Relationship Type</TableHead>
-                        <TableHead>Notes</TableHead>
-                        {!isReadonly && <TableHead className="text-right">Actions</TableHead>}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMappings.map((mapping) => (
-                        <TableRow 
-                          key={mapping.id}
-                          className={mapping.companyCoaId ? 'bg-green-50 dark:bg-green-950/20' : ''}
-                        >
-                          <TableCell className="font-medium">
-                            {getVendorName(mapping.vendorId)}
-                          </TableCell>
-                          <TableCell>{mapping.vendorCoaCode}</TableCell>
-                          <TableCell>{mapping.vendorCoaName}</TableCell>
-                          <TableCell>
-                            {isReadonly ? (
-                              <div>
-                                <div className="font-medium">{mapping.companyCoaCode || '-'}</div>
-                                <div className="text-sm text-muted-foreground">{mapping.companyCoaName || '-'}</div>
-                              </div>
-                            ) : (
-                              <Select
-                                value={mapping.companyCoaId}
-                                onValueChange={(value) => handleUpdateMapping(mapping.id, 'companyCoaId', value)}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select COA..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {companyCOAs.map(coa => (
-                                    <SelectItem key={coa.id} value={coa.id}>
-                                      {coa.coaCode} - {coa.coaName}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {isReadonly ? (
-                              <Badge variant={mapping.relationshipType === 'Equivalent' ? 'default' : 'secondary'}>
-                                {mapping.relationshipType}
-                              </Badge>
-                            ) : (
-                              <Select
-                                value={mapping.relationshipType}
-                                onValueChange={(value) => handleUpdateMapping(mapping.id, 'relationshipType', value)}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Equivalent">Equivalent</SelectItem>
-                                  <SelectItem value="Custom Mapping">Custom Mapping</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {isReadonly ? (
-                              <span className="text-sm">{mapping.notes || '-'}</span>
-                            ) : (
-                              <Input
-                                value={mapping.notes || ''}
-                                onChange={(e) => handleUpdateMapping(mapping.id, 'notes', e.target.value)}
-                                placeholder="Add notes..."
-                              />
-                            )}
-                          </TableCell>
-                          {!isReadonly && (
-                            <TableCell className="text-right">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteMapping(mapping.id)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
-                      {filteredMappings.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={isReadonly ? 6 : 7} className="text-center text-muted-foreground py-8">
-                            No COA mappings found. {!isReadonly && 'Add a vendor to start mapping.'}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select 
+                    value={formData.status} 
+                    onValueChange={(value) => handleChange('status', value)}
+                    disabled={isReadonly}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Company Name *</Label>
+                <Input
+                  id="companyName"
+                  value={formData.companyName}
+                  onChange={(e) => handleChange('companyName', e.target.value)}
+                  placeholder="e.g., PT Pelayaran Nusantara"
+                  required
+                  readOnly={isReadonly}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Textarea
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => handleChange('address', e.target.value)}
+                  placeholder="Company address"
+                  rows={3}
+                  readOnly={isReadonly}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleChange('phone', e.target.value)}
+                    placeholder="+62 xxx xxx xxx"
+                    readOnly={isReadonly}
+                  />
                 </div>
 
-                {/* Summary */}
-                <div className="flex gap-4 p-4 bg-muted/50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Total Mappings</p>
-                    <p className="text-2xl font-bold">{mappings.length}</p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Mapped</p>
-                    <p className="text-2xl font-bold text-green-600">{totalMapped}</p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Unmapped</p>
-                    <p className="text-2xl font-bold text-orange-600">{totalUnmapped}</p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    placeholder="contact@company.com"
+                    readOnly={isReadonly}
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Detail Section: COA Mapping */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">Linked Vendor and COA Mapping</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Add Vendor Section */}
+            {!isReadonly && (
+              <div className="flex gap-3">
+                <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select vendor to add..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vendors.filter(v => v.status === 'Active').map(vendor => (
+                      <SelectItem key={vendor.id} value={vendor.id}>
+                        {vendor.vendorName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" onClick={handleAddVendor} disabled={!selectedVendor}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Vendor
+                </Button>
+              </div>
+            )}
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search mappings..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Mappings Table */}
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Vendor Name</TableHead>
+                    <TableHead>Vendor COA Code</TableHead>
+                    <TableHead>Vendor COA Name</TableHead>
+                    <TableHead>Company COA</TableHead>
+                    <TableHead>Relationship Type</TableHead>
+                    <TableHead>Notes</TableHead>
+                    {!isReadonly && <TableHead className="text-right">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredMappings.map((mapping) => (
+                    <TableRow 
+                      key={mapping.id}
+                      className={mapping.companyCoaId ? 'bg-green-50 dark:bg-green-950/20' : ''}
+                    >
+                      <TableCell className="font-medium">
+                        {getVendorName(mapping.vendorId)}
+                      </TableCell>
+                      <TableCell>{mapping.vendorCoaCode}</TableCell>
+                      <TableCell>{mapping.vendorCoaName}</TableCell>
+                      <TableCell>
+                        {isReadonly ? (
+                          <div>
+                            <div className="font-medium">{mapping.companyCoaCode || '-'}</div>
+                            <div className="text-sm text-muted-foreground">{mapping.companyCoaName || '-'}</div>
+                          </div>
+                        ) : (
+                          <Select
+                            value={mapping.companyCoaId}
+                            onValueChange={(value) => handleUpdateMapping(mapping.id, 'companyCoaId', value)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select COA..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {companyCOAs.map(coa => (
+                                <SelectItem key={coa.id} value={coa.id}>
+                                  {coa.coaCode} - {coa.coaName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isReadonly ? (
+                          <Badge variant={mapping.relationshipType === 'Equivalent' ? 'default' : 'secondary'}>
+                            {mapping.relationshipType}
+                          </Badge>
+                        ) : (
+                          <Select
+                            value={mapping.relationshipType}
+                            onValueChange={(value) => handleUpdateMapping(mapping.id, 'relationshipType', value)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Equivalent">Equivalent</SelectItem>
+                              <SelectItem value="Custom Mapping">Custom Mapping</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isReadonly ? (
+                          <span className="text-sm">{mapping.notes || '-'}</span>
+                        ) : (
+                          <Input
+                            value={mapping.notes || ''}
+                            onChange={(e) => handleUpdateMapping(mapping.id, 'notes', e.target.value)}
+                            placeholder="Add notes..."
+                          />
+                        )}
+                      </TableCell>
+                      {!isReadonly && (
+                        <TableCell className="text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteMapping(mapping.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                  {filteredMappings.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={isReadonly ? 6 : 7} className="text-center text-muted-foreground py-8">
+                        No COA mappings found. {!isReadonly && 'Add a vendor to start mapping.'}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Summary */}
+            <div className="flex gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Total Mappings</p>
+                <p className="text-2xl font-bold">{mappings.length}</p>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Mapped</p>
+                <p className="text-2xl font-bold text-green-600">{totalMapped}</p>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Unmapped</p>
+                <p className="text-2xl font-bold text-orange-600">{totalUnmapped}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Form Actions */}
         {!isReadonly && (
-          <div className="flex justify-end space-x-3 pt-6">
+          <div className="flex justify-end space-x-3">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
