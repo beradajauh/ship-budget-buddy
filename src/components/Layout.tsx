@@ -97,10 +97,10 @@ export default function Layout() {
     : navigation;
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between h-16 px-6 bg-primary-dark flex-shrink-0">
@@ -118,7 +118,7 @@ export default function Layout() {
           </Button>
         </div>
         
-        <nav className="flex-1 overflow-y-auto px-3 py-6 scrollbar-thin scrollbar-thumb-primary-light scrollbar-track-transparent">
+        <nav className="flex-1 overflow-y-auto px-3 py-6">
           {filteredNavigation.map((item) => (
             <div key={item.name}>
               {item.children ? (
@@ -167,9 +167,9 @@ export default function Layout() {
       </div>
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 overflow-hidden h-screen">
+      <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top bar */}
-        <header className="bg-card border-b border-border flex-shrink-0">
+        <header className="bg-card border-b border-border">
           <div className="flex items-center justify-between h-16 px-6">
             <Button
               variant="ghost"

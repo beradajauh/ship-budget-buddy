@@ -39,7 +39,43 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
   const title = mode === 'create' ? 'Add New Company' : mode === 'edit' ? 'Edit Company' : 'Company Details';
 
   // Load all company COAs from localStorage
-  const [companyCOAs] = useLocalStorage<CompanyCOA[]>(`companyCOA_${company?.id || 'temp'}`, []);
+  const companyCOAsKey = company?.id ? `companyCOA_${company.id}` : 'companyCOA_temp';
+  const storedCompanyCOAs = localStorage.getItem(companyCOAsKey);
+  const [companyCOAs] = useState<CompanyCOA[]>(() => {
+    if (storedCompanyCOAs) {
+      return JSON.parse(storedCompanyCOAs);
+    }
+    // Default sample COAs if none exist
+    return [
+      {
+        id: `ccoa-temp-1`,
+        companyId: company?.id || 'temp',
+        coaCode: 'C-5100',
+        coaName: 'Operating Expenses - Fuel',
+        description: 'Biaya operasional bahan bakar',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: `ccoa-temp-2`,
+        companyId: company?.id || 'temp',
+        coaCode: 'C-5200',
+        coaName: 'Operating Expenses - Maintenance',
+        description: 'Biaya operasional perawatan',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: `ccoa-temp-3`,
+        companyId: company?.id || 'temp',
+        coaCode: 'C-5300',
+        coaName: 'Operating Expenses - Crew',
+        description: 'Biaya operasional kru',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,19 +89,42 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
   };
 
   const handleAddVendor = () => {
-    if (!selectedVendor) return;
+    if (!selectedVendor) {
+      console.log('No vendor selected');
+      return;
+    }
+
+    // Check if vendor already added
+    const vendorAlreadyAdded = mappings.some(m => m.vendorId === selectedVendor);
+    if (vendorAlreadyAdded) {
+      alert('Vendor ini sudah ditambahkan!');
+      return;
+    }
 
     const vendor = vendors.find(v => v.id === selectedVendor);
-    if (!vendor) return;
+    if (!vendor) {
+      console.log('Vendor not found:', selectedVendor);
+      return;
+    }
+
+    console.log('Adding vendor:', vendor.vendorName);
 
     // Load vendor COAs from localStorage
     const vendorCOAsKey = `vendorCOA_${selectedVendor}`;
     const vendorCOAsJson = localStorage.getItem(vendorCOAsKey);
     const vendorCOAs: VendorCOA[] = vendorCOAsJson ? JSON.parse(vendorCOAsJson) : [];
 
-    // Create mappings for all vendor COAs
-    const newMappings: COAMapping[] = vendorCOAs.map(vendorCoa => ({
-      id: Date.now().toString() + Math.random(),
+    console.log(`Found ${vendorCOAs.length} COAs for vendor ${vendor.vendorName}`);
+
+    if (vendorCOAs.length === 0) {
+      alert('Vendor ini belum memiliki Master COA. Silahkan tambahkan Master COA Vendor terlebih dahulu.');
+      return;
+    }
+
+    // Create mappings for all vendor COAs with unique IDs
+    const timestamp = Date.now();
+    const newMappings: COAMapping[] = vendorCOAs.map((vendorCoa, index) => ({
+      id: `mapping-${timestamp}-${index}`,
       companyCoaId: '',
       vendorCoaId: vendorCoa.id,
       companyId: company?.id || '',
@@ -80,6 +139,7 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
       updatedAt: new Date().toISOString(),
     }));
 
+    console.log('Created mappings:', newMappings);
     setMappings([...mappings, ...newMappings]);
     setSelectedVendor('');
   };
