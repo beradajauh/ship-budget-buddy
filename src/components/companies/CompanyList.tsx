@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Company, FormMode } from '@/types';
+import { Company, FormMode, COAMapping } from '@/types';
 import CompanyForm from './CompanyForm';
 import CompanyCOAManagementDialog from './CompanyCOAManagementDialog';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -78,21 +78,34 @@ export default function CompanyList() {
     setShowCoaManagement(true);
   };
 
-  const handleSave = (companyData: Company) => {
+  const handleSave = (companyData: Partial<Company>, mappings: COAMapping[]) => {
     if (formMode === 'create') {
       const newCompany: Company = {
-        ...companyData,
+        ...companyData as Company,
         id: Date.now().toString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       setCompanies([...companies, newCompany]);
+      
+      // Save mappings to localStorage with the new company ID
+      if (mappings && mappings.length > 0) {
+        const updatedMappings = mappings.map(m => ({
+          ...m,
+          companyId: newCompany.id
+        }));
+        localStorage.setItem(`companyMappings_${newCompany.id}`, JSON.stringify(updatedMappings));
+      }
+      // Clean up temporary mappings
+      localStorage.removeItem('companyMappings_new');
     } else if (formMode === 'edit' && selectedCompany) {
       setCompanies(companies.map(c => 
         c.id === selectedCompany.id 
-          ? { ...companyData, id: selectedCompany.id, updatedAt: new Date().toISOString() }
+          ? { ...c, ...companyData, updatedAt: new Date().toISOString() } 
           : c
       ));
+      
+      // Mappings are already saved in localStorage by the form
     }
     handleFormClose();
   };

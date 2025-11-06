@@ -75,7 +75,12 @@ export interface COAMapping {
   vendorCoaId: string;
   companyId: string;
   vendorId: string;
-  relationshipType: 'Equivalent' | 'Mapping';
+  vendorCoaCode: string;
+  vendorCoaName: string;
+  companyCoaCode: string;
+  companyCoaName: string;
+  relationshipType: 'Equivalent' | 'Custom Mapping';
+  notes?: string;
   companyCOA?: CompanyCOA;
   vendorCOA?: VendorCOA;
   createdAt: string;

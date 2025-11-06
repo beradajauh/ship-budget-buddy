@@ -39,6 +39,10 @@ export default function COAMappingDialog({ companyCoa, companyId, onClose, reado
       vendorCoaId: 'v1',
       companyId: companyId,
       vendorId: '1',
+      vendorCoaCode: 'VEN001',
+      vendorCoaName: 'Services',
+      companyCoaCode: companyCoa.coaCode,
+      companyCoaName: companyCoa.coaName,
       relationshipType: 'Equivalent',
       vendorCOA: mockVendorCOAs['1'][0],
       createdAt: new Date().toISOString(),
@@ -51,7 +55,7 @@ export default function COAMappingDialog({ companyCoa, companyId, onClose, reado
   const [formData, setFormData] = useState({
     vendorId: '',
     vendorCoaId: '',
-    relationshipType: 'Equivalent' as 'Equivalent' | 'Mapping',
+    relationshipType: 'Equivalent' as 'Equivalent' | 'Custom Mapping',
   });
 
   const filteredVendorCOAs = formData.vendorId ? mockVendorCOAs[formData.vendorId as keyof typeof mockVendorCOAs] || [] : [];
@@ -77,15 +81,18 @@ export default function COAMappingDialog({ companyCoa, companyId, onClose, reado
   };
 
   const handleSaveMapping = () => {
+    const selectedVendorCOA = filteredVendorCOAs.find(v => v.id === formData.vendorCoaId);
     if (editingMapping) {
       setMappings(mappings.map(m => 
         m.id === editingMapping.id 
           ? { 
               ...m, 
               vendorId: formData.vendorId, 
-              vendorCoaId: formData.vendorCoaId, 
+              vendorCoaId: formData.vendorCoaId,
+              vendorCoaCode: selectedVendorCOA?.vendorCoaCode || '',
+              vendorCoaName: selectedVendorCOA?.vendorCoaName || '',
               relationshipType: formData.relationshipType,
-              vendorCOA: filteredVendorCOAs.find(v => v.id === formData.vendorCoaId),
+              vendorCOA: selectedVendorCOA,
             } 
           : m
       ));
@@ -96,8 +103,12 @@ export default function COAMappingDialog({ companyCoa, companyId, onClose, reado
         vendorCoaId: formData.vendorCoaId,
         companyId: companyId,
         vendorId: formData.vendorId,
+        vendorCoaCode: selectedVendorCOA?.vendorCoaCode || '',
+        vendorCoaName: selectedVendorCOA?.vendorCoaName || '',
+        companyCoaCode: companyCoa.coaCode,
+        companyCoaName: companyCoa.coaName,
         relationshipType: formData.relationshipType,
-        vendorCOA: filteredVendorCOAs.find(v => v.id === formData.vendorCoaId),
+        vendorCOA: selectedVendorCOA,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -177,13 +188,13 @@ export default function COAMappingDialog({ companyCoa, companyId, onClose, reado
                   </div>
                   <div className="space-y-2">
                     <Label>Relationship Type *</Label>
-                    <Select value={formData.relationshipType} onValueChange={(value: 'Equivalent' | 'Mapping') => setFormData({...formData, relationshipType: value})}>
+                    <Select value={formData.relationshipType} onValueChange={(value: 'Equivalent' | 'Custom Mapping') => setFormData({...formData, relationshipType: value})}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Equivalent">Equivalent</SelectItem>
-                        <SelectItem value="Mapping">Mapping</SelectItem>
+                        <SelectItem value="Custom Mapping">Custom Mapping</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

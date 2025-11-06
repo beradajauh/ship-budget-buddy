@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Save, Plus, Trash2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,12 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Company, CompanyCOA, COAMapping, FormMode } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Company, CompanyCOA, COAMapping, FormMode, Vendor, VendorCOA } from '@/types';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface CompanyFormProps {
   mode: FormMode;
   company?: Company | null;
-  onSave: (company: Partial<Company>) => void;
+  onSave: (company: Partial<Company>, mappings: COAMapping[]) => void;
   onClose: () => void;
 }
 
@@ -27,8 +29,17 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
     status: company?.status || 'Active',
   });
 
-  // Mock data for view mode - Company COAs with their vendor mappings
-  const mockCompanyCOAsWithMappings: Array<CompanyCOA & { mappings: COAMapping[] }> = [
+  const [vendors] = useLocalStorage<Vendor[]>('vendors', []);
+  const [mappings, setMappings] = useLocalStorage<COAMapping[]>(`companyMappings_${company?.id || 'new'}`, []);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedVendor, setSelectedVendor] = useState<string>('');
+  const [editingMapping, setEditingMapping] = useState<COAMapping | null>(null);
+
+  const isReadonly = mode === 'view';
+  const title = mode === 'create' ? 'Add New Company' : mode === 'edit' ? 'Edit Company' : 'Company Details';
+
+  // Load all company COAs from localStorage
+  const [companyCOAs] = useLocalStorage<CompanyCOA[]>(`companyCOA_${company?.id || 'temp'}`, [
     {
       id: '1',
       companyId: company?.id || '',
@@ -37,46 +48,6 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
       description: 'Day to day operational costs',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      mappings: [
-        {
-          id: 'm1',
-          companyCoaId: '1',
-          vendorCoaId: 'v1',
-          companyId: company?.id || '',
-          vendorId: '1',
-          relationshipType: 'Equivalent',
-          vendorCOA: {
-            id: 'v1',
-            vendorId: '1',
-            vendorCoaCode: 'VEN001',
-            vendorCoaName: 'Services',
-            description: 'Service charges',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: 'm2',
-          companyCoaId: '1',
-          vendorCoaId: 'v2',
-          companyId: company?.id || '',
-          vendorId: '1',
-          relationshipType: 'Mapping',
-          vendorCOA: {
-            id: 'v2',
-            vendorId: '1',
-            vendorCoaCode: 'VEN002',
-            vendorCoaName: 'Supplies',
-            description: 'Material supplies',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ],
     },
     {
       id: '2',
@@ -86,42 +57,95 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
       description: 'Vessel maintenance costs',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      mappings: [
-        {
-          id: 'm3',
-          companyCoaId: '2',
-          vendorCoaId: 'v3',
-          companyId: company?.id || '',
-          vendorId: '2',
-          relationshipType: 'Equivalent',
-          vendorCOA: {
-            id: 'v3',
-            vendorId: '2',
-            vendorCoaCode: 'VEN003',
-            vendorCoaName: 'Materials',
-            description: 'Raw materials',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ],
     },
-  ];
-
-  const isReadonly = mode === 'view';
-  const title = mode === 'create' ? 'Add New Company' : mode === 'edit' ? 'Edit Company' : 'Company Details';
+  ]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (mode !== 'view') {
-      onSave(formData);
+      onSave(formData, mappings);
     }
   };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddVendor = () => {
+    if (!selectedVendor) return;
+
+    const vendor = vendors.find(v => v.id === selectedVendor);
+    if (!vendor) return;
+
+    // Load vendor COAs from localStorage
+    const vendorCOAsKey = `vendorCOA_${selectedVendor}`;
+    const vendorCOAsJson = localStorage.getItem(vendorCOAsKey);
+    const vendorCOAs: VendorCOA[] = vendorCOAsJson ? JSON.parse(vendorCOAsJson) : [];
+
+    // Create mappings for all vendor COAs
+    const newMappings: COAMapping[] = vendorCOAs.map(vendorCoa => ({
+      id: Date.now().toString() + Math.random(),
+      companyCoaId: '',
+      vendorCoaId: vendorCoa.id,
+      companyId: company?.id || '',
+      vendorId: selectedVendor,
+      vendorCoaCode: vendorCoa.vendorCoaCode,
+      vendorCoaName: vendorCoa.vendorCoaName,
+      companyCoaCode: '',
+      companyCoaName: '',
+      relationshipType: 'Equivalent',
+      notes: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+
+    setMappings([...mappings, ...newMappings]);
+    setSelectedVendor('');
+  };
+
+  const handleUpdateMapping = (mappingId: string, field: string, value: string) => {
+    setMappings(mappings.map(m => {
+      if (m.id === mappingId) {
+        const updated = { ...m, [field]: value };
+        
+        // If company COA is selected, auto-fill code and name
+        if (field === 'companyCoaId') {
+          const companyCoa = companyCOAs.find(c => c.id === value);
+          if (companyCoa) {
+            updated.companyCoaCode = companyCoa.coaCode;
+            updated.companyCoaName = companyCoa.coaName;
+          }
+        }
+        
+        return updated;
+      }
+      return m;
+    }));
+  };
+
+  const handleDeleteMapping = (mappingId: string) => {
+    if (confirm('Are you sure you want to delete this mapping?')) {
+      setMappings(mappings.filter(m => m.id !== mappingId));
+    }
+  };
+
+  const filteredMappings = mappings.filter(m => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      m.vendorCoaCode.toLowerCase().includes(search) ||
+      m.vendorCoaName.toLowerCase().includes(search) ||
+      m.companyCoaCode.toLowerCase().includes(search) ||
+      m.companyCoaName.toLowerCase().includes(search)
+    );
+  });
+
+  const totalMapped = mappings.filter(m => m.companyCoaId !== '').length;
+  const totalUnmapped = mappings.length - totalMapped;
+
+  const getVendorName = (vendorId: string) => {
+    const vendor = vendors.find(v => v.id === vendorId);
+    return vendor?.vendorName || 'Unknown Vendor';
   };
 
   return (
@@ -140,182 +164,284 @@ export default function CompanyForm({ mode, company, onSave, onClose }: CompanyF
         </div>
       </div>
 
-      {/* Header Form */}
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Company Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="companyCode">Company Code *</Label>
-                <Input
-                  id="companyCode"
-                  value={formData.companyCode}
-                  onChange={(e) => handleChange('companyCode', e.target.value)}
-                  placeholder="e.g., PT001"
-                  required
-                  readOnly={isReadonly}
-                />
-              </div>
+      <form onSubmit={handleSubmit}>
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="info">Company Info</TabsTrigger>
+            <TabsTrigger value="mapping">COA Mapping</TabsTrigger>
+          </TabsList>
 
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value) => handleChange('status', value)}
-                  disabled={isReadonly}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name *</Label>
-              <Input
-                id="companyName"
-                value={formData.companyName}
-                onChange={(e) => handleChange('companyName', e.target.value)}
-                placeholder="e.g., PT Pelayaran Nusantara"
-                required
-                readOnly={isReadonly}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleChange('address', e.target.value)}
-                placeholder="Company address"
-                rows={3}
-                readOnly={isReadonly}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  placeholder="+62 xxx xxx xxx"
-                  readOnly={isReadonly}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  placeholder="contact@company.com"
-                  readOnly={isReadonly}
-                />
-              </div>
-            </div>
-
-            {!isReadonly && (
-              <div className="flex justify-end space-x-3 pt-6">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  <Save className="h-4 w-4 mr-2" />
-                  {mode === 'create' ? 'Create Company' : 'Update Company'}
-                </Button>
-              </div>
-            )}
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* COA List with Vendor Mappings - Only show in view mode */}
-      {isReadonly && (
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">COA Perusahaan & Persamaan COA Vendor</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {mockCompanyCOAsWithMappings.map((coa) => (
-              <div key={coa.id} className="space-y-3">
-                {/* Company COA Header */}
-                <div className="bg-muted/50 p-4 rounded-lg border border-border">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">COA Code</p>
-                      <p className="font-semibold text-foreground">{coa.coaCode}</p>
+          {/* Tab 1: Company Info */}
+          <TabsContent value="info" className="space-y-4">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-foreground">Company Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="companyCode">Company Code *</Label>
+                      <Input
+                        id="companyCode"
+                        value={formData.companyCode}
+                        onChange={(e) => handleChange('companyCode', e.target.value)}
+                        placeholder="e.g., PT001"
+                        required
+                        readOnly={isReadonly}
+                      />
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">COA Name</p>
-                      <p className="font-semibold text-foreground">{coa.coaName}</p>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select 
+                        value={formData.status} 
+                        onValueChange={(value) => handleChange('status', value)}
+                        disabled={isReadonly}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Description</p>
-                      <p className="text-foreground">{coa.description}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Company Name *</Label>
+                    <Input
+                      id="companyName"
+                      value={formData.companyName}
+                      onChange={(e) => handleChange('companyName', e.target.value)}
+                      placeholder="e.g., PT Pelayaran Nusantara"
+                      required
+                      readOnly={isReadonly}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Textarea
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => handleChange('address', e.target.value)}
+                      placeholder="Company address"
+                      rows={3}
+                      readOnly={isReadonly}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => handleChange('phone', e.target.value)}
+                        placeholder="+62 xxx xxx xxx"
+                        readOnly={isReadonly}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleChange('email', e.target.value)}
+                        placeholder="contact@company.com"
+                        readOnly={isReadonly}
+                      />
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                {/* Vendor COA Mappings */}
-                <div className="pl-4 border-l-2 border-primary/30">
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Persamaan COA Vendor:</p>
-                  {coa.mappings.length > 0 ? (
-                    <div className="space-y-2">
-                      {coa.mappings.map((mapping) => (
-                        <div
+          {/* Tab 2: COA Mapping */}
+          <TabsContent value="mapping" className="space-y-4">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-foreground">Linked Vendor and COA Mapping</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Add Vendor Section */}
+                {!isReadonly && (
+                  <div className="flex gap-3">
+                    <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select vendor to add..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vendors.filter(v => v.status === 'Active').map(vendor => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                            {vendor.vendorName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" onClick={handleAddVendor} disabled={!selectedVendor}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Vendor
+                    </Button>
+                  </div>
+                )}
+
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search mappings..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {/* Mappings Table */}
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Vendor Name</TableHead>
+                        <TableHead>Vendor COA Code</TableHead>
+                        <TableHead>Vendor COA Name</TableHead>
+                        <TableHead>Company COA</TableHead>
+                        <TableHead>Relationship Type</TableHead>
+                        <TableHead>Notes</TableHead>
+                        {!isReadonly && <TableHead className="text-right">Actions</TableHead>}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredMappings.map((mapping) => (
+                        <TableRow 
                           key={mapping.id}
-                          className="bg-background p-3 rounded border border-border flex items-center justify-between"
+                          className={mapping.companyCoaId ? 'bg-green-50 dark:bg-green-950/20' : ''}
                         >
-                          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                            <div>
-                              <p className="text-xs text-muted-foreground">Vendor COA Code</p>
-                              <p className="font-medium text-sm">{mapping.vendorCOA?.vendorCoaCode}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Vendor COA Name</p>
-                              <p className="text-sm">{mapping.vendorCOA?.vendorCoaName}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Relationship</p>
-                              <Badge
-                                variant={mapping.relationshipType === 'Equivalent' ? 'default' : 'secondary'}
-                                className="text-xs"
+                          <TableCell className="font-medium">
+                            {getVendorName(mapping.vendorId)}
+                          </TableCell>
+                          <TableCell>{mapping.vendorCoaCode}</TableCell>
+                          <TableCell>{mapping.vendorCoaName}</TableCell>
+                          <TableCell>
+                            {isReadonly ? (
+                              <div>
+                                <div className="font-medium">{mapping.companyCoaCode || '-'}</div>
+                                <div className="text-sm text-muted-foreground">{mapping.companyCoaName || '-'}</div>
+                              </div>
+                            ) : (
+                              <Select
+                                value={mapping.companyCoaId}
+                                onValueChange={(value) => handleUpdateMapping(mapping.id, 'companyCoaId', value)}
                               >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select COA..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {companyCOAs.map(coa => (
+                                    <SelectItem key={coa.id} value={coa.id}>
+                                      {coa.coaCode} - {coa.coaName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {isReadonly ? (
+                              <Badge variant={mapping.relationshipType === 'Equivalent' ? 'default' : 'secondary'}>
                                 {mapping.relationshipType}
                               </Badge>
-                            </div>
-                          </div>
-                        </div>
+                            ) : (
+                              <Select
+                                value={mapping.relationshipType}
+                                onValueChange={(value) => handleUpdateMapping(mapping.id, 'relationshipType', value)}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Equivalent">Equivalent</SelectItem>
+                                  <SelectItem value="Custom Mapping">Custom Mapping</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {isReadonly ? (
+                              <span className="text-sm">{mapping.notes || '-'}</span>
+                            ) : (
+                              <Input
+                                value={mapping.notes || ''}
+                                onChange={(e) => handleUpdateMapping(mapping.id, 'notes', e.target.value)}
+                                placeholder="Add notes..."
+                              />
+                            )}
+                          </TableCell>
+                          {!isReadonly && (
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteMapping(mapping.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          )}
+                        </TableRow>
                       ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">No vendor mappings</p>
-                  )}
+                      {filteredMappings.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={isReadonly ? 6 : 7} className="text-center text-muted-foreground py-8">
+                            No COA mappings found. {!isReadonly && 'Add a vendor to start mapping.'}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
-              </div>
-            ))}
 
-            {mockCompanyCOAsWithMappings.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No COA records found
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                {/* Summary */}
+                <div className="flex gap-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">Total Mappings</p>
+                    <p className="text-2xl font-bold">{mappings.length}</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">Mapped</p>
+                    <p className="text-2xl font-bold text-green-600">{totalMapped}</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">Unmapped</p>
+                    <p className="text-2xl font-bold text-orange-600">{totalUnmapped}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Form Actions */}
+        {!isReadonly && (
+          <div className="flex justify-end space-x-3 pt-6">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              <Save className="h-4 w-4 mr-2" />
+              {mode === 'create' ? 'Create Company' : 'Update Company'}
+            </Button>
+          </div>
+        )}
+      </form>
     </div>
   );
 }
