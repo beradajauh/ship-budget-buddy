@@ -194,14 +194,26 @@ export const initSampleData = () => {
   console.log('  - vendorCOA_vendor-2 (PT MBS):', vendorCOAs2.length, 'items');
   console.log('  - vendorCOA_vendor-3 (PT Bahari Sejahtera):', vendorCOAs3.length, 'items');
 
-  // Initialize company COAs for existing companies
+  // Initialize company COAs - ALWAYS setup for mock companies used in Budget Form
+  const mockCompanyIds = ['1', '2']; // IDs from mockCompanies in BudgetForm
+  mockCompanyIds.forEach(companyId => {
+    const coaKey = `companyCOA_${companyId}`;
+    localStorage.setItem(coaKey, JSON.stringify(getDefaultCompanyCOAs(companyId)));
+  });
+  console.log('✓ Company COAs initialized for mock companies');
+  console.log('  - companyCOA_1 (PT Pelayaran Nusantara):', getDefaultCompanyCOAs('1').length, 'items');
+  console.log('  - companyCOA_2 (PT Samudera Jaya):', getDefaultCompanyCOAs('2').length, 'items');
+
+  // Initialize company COAs for any other existing companies in localStorage
   const existingCompanies = localStorage.getItem('companies');
   if (existingCompanies) {
     const companies = JSON.parse(existingCompanies);
     companies.forEach((company: any) => {
-      const coaKey = `companyCOA_${company.id}`;
-      if (!localStorage.getItem(coaKey)) {
+      // Skip if already initialized above
+      if (!mockCompanyIds.includes(company.id)) {
+        const coaKey = `companyCOA_${company.id}`;
         localStorage.setItem(coaKey, JSON.stringify(getDefaultCompanyCOAs(company.id)));
+        console.log(`  - companyCOA_${company.id}:`, getDefaultCompanyCOAs(company.id).length, 'items');
       }
     });
   }
