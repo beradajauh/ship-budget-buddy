@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Save, Copy, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BudgetHeader, BudgetDetail, FormMode } from '@/types';
+import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
+import { BudgetHeader, FormMode, CompanyCOA } from '@/types';
+import { getPreviousMonth, formatPeriod } from '@/lib/utils';
 
 interface BudgetFormProps {
   mode: FormMode;
@@ -31,15 +34,6 @@ const mockYearlyBudgets = [
   { id: 'yb2', year: '2024', companyId: '2', vesselId: '2', totalBudget: 1020000, usedBudget: 170000, remainingBudget: 850000 },
 ];
 
-const mockCategories = [
-  { id: '11', name: 'Marine Diesel Oil', code: 'FUEL-MDO' },
-  { id: '12', name: 'Lubricating Oil', code: 'FUEL-LUB' },
-  { id: '21', name: 'Crew Salaries', code: 'CREW-SAL' },
-  { id: '22', name: 'Crew Food & Provisions', code: 'CREW-FOD' },
-  { id: '3', name: 'Maintenance', code: 'MAINT' },
-  { id: '4', name: 'Insurance', code: 'INS' },
-];
-
 export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetFormProps) {
   const [formData, setFormData] = useState({
     yearlyBudgetId: budget?.yearlyBudgetId || '',
@@ -50,9 +44,11 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
     status: budget?.status || 'Draft',
   });
 
-  const [budgetDetails, setBudgetDetails] = useState<BudgetDetail[]>(
-    budget?.budgetDetails || []
-  );
+  const [allCompanyCOAs, setAllCompanyCOAs] = useState<CompanyCOA[]>([]);
+  const [budgetAmounts, setBudgetAmounts] = useState<Record<string, number>>({});
+  const [budgetNotes, setBudgetNotes] = useState<Record<string, string>>({});
+  const [searchCOA, setSearchCOA] = useState('');
+  const [showZeroAmounts, setShowZeroAmounts] = useState(true);
 
   const isReadonly = mode === 'view';
   const title = mode === 'create' ? 'Create Monthly Budget' : mode === 'edit' ? 'Edit Monthly Budget' : 'Monthly Budget Details';
@@ -60,17 +56,123 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
   const selectedCompany = mockCompanies.find(c => c.id === formData.companyId);
   const availableVessels = mockVessels.filter(v => v.companyId === formData.companyId);
   
-  // Get available yearly budgets based on selected company and vessel
   const availableYearlyBudgets = mockYearlyBudgets.filter(
     yb => yb.companyId === formData.companyId && yb.vesselId === formData.vesselId
   );
   
   const selectedYearlyBudget = mockYearlyBudgets.find(yb => yb.id === formData.yearlyBudgetId);
 
+  // Load Company COAs when company changes
+  useEffect(() => {
+    if (formData.companyId) {
+      const companyCOAsKey = `companyCOA_${formData.companyId}`;
+      const storedCOAs = localStorage.getItem(companyCOAsKey);
+      
+      if (storedCOAs) {
+        const coas: CompanyCOA[] = JSON.parse(storedCOAs);
+        setAllCompanyCOAs(coas);
+        
+        // Initialize with existing budget data if in edit/view mode
+        if (budget?.budgetDetails) {
+          const amounts: Record<string, number> = {};
+          const notes: Record<string, string> = {};
+          
+          budget.budgetDetails.forEach(detail => {
+            amounts[detail.coaId] = detail.budgetAmount;
+            notes[detail.coaId] = detail.notes || '';
+          });
+          
+          setBudgetAmounts(amounts);
+          setBudgetNotes(notes);
+        }
+      } else {
+        setAllCompanyCOAs([]);
+        toast.warning('No Chart of Accounts found for this company. Please set up Master COA first.');
+      }
+    }
+  }, [formData.companyId, budget]);
+
+  // Filter COAs based on search
+  const filteredCOAs = useMemo(() => {
+    return allCompanyCOAs.filter(coa => {
+      const searchLower = searchCOA.toLowerCase();
+      return (
+        coa.coaCode.toLowerCase().includes(searchLower) ||
+        coa.coaName.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [allCompanyCOAs, searchCOA]);
+
+  // Calculate summary stats
+  const filledCount = useMemo(() => {
+    return Object.values(budgetAmounts).filter(amount => amount > 0).length;
+  }, [budgetAmounts]);
+
+  const totalBudget = useMemo(() => {
+    return Object.values(budgetAmounts).reduce((sum, amount) => sum + amount, 0);
+  }, [budgetAmounts]);
+
+  const handleCopyFromPreviousMonth = () => {
+    if (!formData.period || !formData.companyId || !formData.vesselId) {
+      toast.error('Please select Company, Vessel, and Period first');
+      return;
+    }
+
+    const previousPeriod = getPreviousMonth(formData.period);
+    const budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
+    
+    const previousBudget = budgets.find((b: BudgetHeader) => 
+      b.companyId === formData.companyId &&
+      b.vesselId === formData.vesselId &&
+      b.period === previousPeriod
+    );
+    
+    if (previousBudget && previousBudget.budgetDetails) {
+      const amounts: Record<string, number> = {};
+      const notes: Record<string, string> = {};
+      
+      previousBudget.budgetDetails.forEach((detail: any) => {
+        amounts[detail.coaId] = detail.budgetAmount;
+        notes[detail.coaId] = detail.notes || '';
+      });
+      
+      setBudgetAmounts(amounts);
+      setBudgetNotes(notes);
+      toast.success(`Budget copied from ${formatPeriod(previousPeriod)}`);
+    } else {
+      toast.info(`No budget found for ${formatPeriod(previousPeriod)}`);
+    }
+  };
+
+  const handleAmountChange = (coaId: string, value: string) => {
+    const amount = parseFloat(value) || 0;
+    setBudgetAmounts(prev => ({
+      ...prev,
+      [coaId]: amount
+    }));
+  };
+
+  const handleNotesChange = (coaId: string, value: string) => {
+    setBudgetNotes(prev => ({
+      ...prev,
+      [coaId]: value
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (mode !== 'view') {
-      const totalBudget = budgetDetails.reduce((sum, detail) => sum + detail.budgetAmount, 0);
+      // Convert budgetAmounts and budgetNotes to budgetDetails array
+      const budgetDetails = allCompanyCOAs
+        .filter(coa => budgetAmounts[coa.id] > 0) // Only include COAs with amounts
+        .map(coa => ({
+          id: `${coa.id}-${Date.now()}`,
+          budgetId: budget?.id || '',
+          coaId: coa.id,
+          budgetAmount: budgetAmounts[coa.id] || 0,
+          notes: budgetNotes[coa.id] || '',
+        }));
+
       onSave({ ...formData, totalBudget, budgetDetails });
     }
   };
@@ -79,42 +181,20 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
-      // Auto-set currency when company changes
       if (field === 'companyId') {
         const company = mockCompanies.find(c => c.id === value);
         if (company) {
           newData.currency = company.currency;
         }
-        // Reset vessel when company changes
         newData.vesselId = '';
+        // Reset budget data when company changes
+        setBudgetAmounts({});
+        setBudgetNotes({});
       }
       
       return newData;
     });
   };
-
-  const addBudgetDetail = () => {
-    const newDetail: BudgetDetail = {
-      id: Date.now().toString(),
-      budgetId: budget?.id || '',
-      coaId: '',
-      budgetAmount: 0,
-      notes: '',
-    };
-    setBudgetDetails([...budgetDetails, newDetail]);
-  };
-
-  const updateBudgetDetail = (index: number, field: keyof BudgetDetail, value: string | number) => {
-    const updated = [...budgetDetails];
-    updated[index] = { ...updated[index], [field]: value };
-    setBudgetDetails(updated);
-  };
-
-  const removeBudgetDetail = (index: number) => {
-    setBudgetDetails(budgetDetails.filter((_, i) => i !== index));
-  };
-
-  const totalBudget = budgetDetails.reduce((sum, detail) => sum + detail.budgetAmount, 0);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -266,100 +346,132 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
           </CardContent>
         </Card>
 
-        {/* Budget Details */}
+        {/* Budget Details - Bulk Entry Table */}
         <Card className="border-border">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-foreground">Budget Allocation</CardTitle>
-              {!isReadonly && (
-                <Button type="button" onClick={addBudgetDetail} size="sm" className="bg-primary hover:bg-primary-dark">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
+              {!isReadonly && formData.period && formData.companyId && formData.vesselId && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCopyFromPreviousMonth}
+                  size="sm"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy from Previous Month
                 </Button>
               )}
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>COA</TableHead>
-                  <TableHead>Budget Amount</TableHead>
-                  <TableHead>Notes</TableHead>
-                  {!isReadonly && <TableHead className="w-16">Action</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {budgetDetails.map((detail, index) => (
-                  <TableRow key={detail.id}>
-                    <TableCell>
-                      <Select
-                        value={detail.coaId}
-                        onValueChange={(value) => updateBudgetDetail(index, 'coaId', value)}
-                        disabled={isReadonly}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select COA" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockCategories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.code} - {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={detail.budgetAmount}
-                        onChange={(e) => updateBudgetDetail(index, 'budgetAmount', parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                        readOnly={isReadonly}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={detail.notes || ''}
-                        onChange={(e) => updateBudgetDetail(index, 'notes', e.target.value)}
-                        placeholder="Optional notes"
-                        readOnly={isReadonly}
-                      />
-                    </TableCell>
-                    {!isReadonly && (
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeBudgetDetail(index)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-                {budgetDetails.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={isReadonly ? 3 : 4} className="text-center text-muted-foreground py-8">
-                      No budget items added yet. Click "Add Item" to start.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-
-            {budgetDetails.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-foreground">Total Budget:</span>
-                  <span className="text-xl font-bold text-primary">
-                    {formatCurrency(totalBudget)}
-                  </span>
+            {allCompanyCOAs.length > 0 ? (
+              <>
+                {/* Search & Filter Bar */}
+                <div className="mb-4 flex items-center gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search COA by code or name..."
+                      value={searchCOA}
+                      onChange={(e) => setSearchCOA(e.target.value)}
+                      className="pl-10"
+                      disabled={isReadonly}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={showZeroAmounts}
+                      onCheckedChange={setShowZeroAmounts}
+                      disabled={isReadonly}
+                    />
+                    <Label className="text-sm">Show zero amounts</Label>
+                  </div>
                 </div>
+
+                {/* Bulk Entry Table */}
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[120px]">COA Code</TableHead>
+                        <TableHead>COA Name</TableHead>
+                        <TableHead className="w-[160px]">Budget Amount</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCOAs.map((coa) => {
+                        const amount = budgetAmounts[coa.id] || 0;
+                        const notes = budgetNotes[coa.id] || '';
+                        
+                        // Skip if showZeroAmounts = false and amount = 0
+                        if (!showZeroAmounts && amount === 0) return null;
+                        
+                        return (
+                          <TableRow 
+                            key={coa.id}
+                            className={amount > 0 ? 'bg-accent/20' : ''}
+                          >
+                            <TableCell className="font-mono text-sm">{coa.coaCode}</TableCell>
+                            <TableCell className="font-medium">{coa.coaName}</TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={amount || ''}
+                                onChange={(e) => handleAmountChange(coa.id, e.target.value)}
+                                placeholder="0"
+                                readOnly={isReadonly}
+                                className="w-full"
+                                min="0"
+                                step="0.01"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={notes}
+                                onChange={(e) => handleNotesChange(coa.id, e.target.value)}
+                                placeholder="Optional notes"
+                                readOnly={isReadonly}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      {filteredCOAs.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                            No COAs found matching your search
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Summary Section */}
+                <div className="mt-4 pt-4 border-t space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total COAs:</span>
+                    <span className="font-medium">{allCompanyCOAs.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Filled:</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">
+                      {filledCount} / {allCompanyCOAs.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-lg font-semibold text-foreground">Total Budget:</span>
+                    <span className="text-xl font-bold text-primary">
+                      {formatCurrency(totalBudget)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                Please select a company to load Chart of Accounts
               </div>
             )}
           </CardContent>
@@ -370,7 +482,7 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary-dark">
+            <Button type="submit" className="bg-primary hover:bg-primary-dark" disabled={allCompanyCOAs.length === 0}>
               <Save className="h-4 w-4 mr-2" />
               {mode === 'create' ? 'Create Monthly Budget' : 'Update Monthly Budget'}
             </Button>
