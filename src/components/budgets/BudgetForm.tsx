@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { BudgetHeader, FormMode, CompanyCOA } from '@/types';
 import { getPreviousMonth, formatPeriod } from '@/lib/utils';
@@ -49,6 +50,8 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
   const [budgetNotes, setBudgetNotes] = useState<Record<string, string>>({});
   const [searchCOA, setSearchCOA] = useState('');
   const [showZeroAmounts, setShowZeroAmounts] = useState(true);
+  const [selectedCopyMonth, setSelectedCopyMonth] = useState('');
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const isReadonly = mode === 'view';
   const title = mode === 'create' ? 'Create Monthly Budget' : mode === 'edit' ? 'Edit Monthly Budget' : 'Monthly Budget Details';
@@ -112,35 +115,56 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
     return Object.values(budgetAmounts).reduce((sum, amount) => sum + amount, 0);
   }, [budgetAmounts]);
 
-  const handleCopyFromPreviousMonth = () => {
-    if (!formData.period || !formData.companyId || !formData.vesselId) {
-      toast.error('Please select Company, Vessel, and Period first');
+  // Get available months to copy from
+  const getAvailableMonths = useMemo(() => {
+    if (!formData.companyId || !formData.vesselId) return [];
+    
+    const budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
+    const availableBudgets = budgets
+      .filter((b: BudgetHeader) => 
+        b.companyId === formData.companyId &&
+        b.vesselId === formData.vesselId &&
+        b.period !== formData.period // Exclude current period
+      )
+      .map((b: BudgetHeader) => ({
+        period: b.period,
+        label: formatPeriod(b.period)
+      }))
+      .sort((a, b) => b.period.localeCompare(a.period)); // Sort descending (newest first)
+    
+    return availableBudgets;
+  }, [formData.companyId, formData.vesselId, formData.period]);
+
+  const handleCopyFromMonth = () => {
+    if (!selectedCopyMonth) {
+      toast.error('Please select a month to copy from');
       return;
     }
 
-    const previousPeriod = getPreviousMonth(formData.period);
     const budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
     
-    const previousBudget = budgets.find((b: BudgetHeader) => 
+    const sourceBudget = budgets.find((b: BudgetHeader) => 
       b.companyId === formData.companyId &&
       b.vesselId === formData.vesselId &&
-      b.period === previousPeriod
+      b.period === selectedCopyMonth
     );
     
-    if (previousBudget && previousBudget.budgetDetails) {
+    if (sourceBudget && sourceBudget.budgetDetails) {
       const amounts: Record<string, number> = {};
       const notes: Record<string, string> = {};
       
-      previousBudget.budgetDetails.forEach((detail: any) => {
+      sourceBudget.budgetDetails.forEach((detail: any) => {
         amounts[detail.coaId] = detail.budgetAmount;
         notes[detail.coaId] = detail.notes || '';
       });
       
       setBudgetAmounts(amounts);
       setBudgetNotes(notes);
-      toast.success(`Budget copied from ${formatPeriod(previousPeriod)}`);
+      setIsPopoverOpen(false);
+      setSelectedCopyMonth('');
+      toast.success(`Budget copied from ${formatPeriod(selectedCopyMonth)}`);
     } else {
-      toast.info(`No budget found for ${formatPeriod(previousPeriod)}`);
+      toast.error(`No budget data found for ${formatPeriod(selectedCopyMonth)}`);
     }
   };
 
@@ -352,15 +376,79 @@ export default function BudgetForm({ mode, budget, onSave, onClose }: BudgetForm
             <div className="flex items-center justify-between">
               <CardTitle className="text-foreground">Budget Allocation</CardTitle>
               {!isReadonly && formData.period && formData.companyId && formData.vesselId && (
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleCopyFromPreviousMonth}
-                  size="sm"
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy from Previous Month
-                </Button>
+                <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy From
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="end">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm">Copy Budget From</h4>
+                        <p className="text-xs text-muted-foreground">
+                          Select a month to copy budget data from
+                        </p>
+                      </div>
+                      
+                      {getAvailableMonths.length > 0 ? (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="copy-month">Select Month</Label>
+                            <Select 
+                              value={selectedCopyMonth} 
+                              onValueChange={setSelectedCopyMonth}
+                            >
+                              <SelectTrigger id="copy-month">
+                                <SelectValue placeholder="Choose a month..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getAvailableMonths.map((month) => (
+                                  <SelectItem key={month.period} value={month.period}>
+                                    {month.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button 
+                              type="button" 
+                              onClick={handleCopyFromMonth}
+                              disabled={!selectedCopyMonth}
+                              className="flex-1"
+                              size="sm"
+                            >
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copy
+                            </Button>
+                            <Button 
+                              type="button" 
+                              variant="outline"
+                              onClick={() => {
+                                setIsPopoverOpen(false);
+                                setSelectedCopyMonth('');
+                              }}
+                              size="sm"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          No previous budgets available for this company and vessel
+                        </p>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
           </CardHeader>
